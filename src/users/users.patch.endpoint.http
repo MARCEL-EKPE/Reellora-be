@@ -1,0 +1,10 @@
+## Update Request for Users Controller
+
+PATCH  http://localhost:3000/users/1234
+Content-Type: application/json
+
+{
+    "firstName": "Marcel",
+    "lastName": "Ekpe",
+    "email": "marcel@gmail.com"
+}
