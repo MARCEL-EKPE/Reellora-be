@@ -1,47 +1,46 @@
-import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
+import { GetAllUsersParamDto } from './dtos/get-users.dto';
+import { GetOneUserParamDto } from './dtos/get-one-user.dto';
+import { PatchUserDto } from './dtos/patch-user.dto';
+import { UsersService } from './providers/users.service';
 
 @Controller('users')
 export class UsersController {
+
+    constructor(
+        /**
+         * injecting usersService as a dependency
+         */
+        private readonly usersService: UsersService
+
+    ) { }
+
     @Get()
-    public findAllUsers(
-        @Query('offset', new DefaultValuePipe(1), ParseIntPipe) offset: number,
-        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number
-    ) {
-        return {
-            offset,
-            limit
-        }
+    public findAllUsers(@Query() getAllUsersParamDto: GetAllUsersParamDto) {
+        return this.usersService.findAllUsers(getAllUsersParamDto)
     }
 
     @Get(':id')
-    public findOneUser(@Param('id', ParseIntPipe) id: number) {
-        return {
-            message: `user with ID ${id}`,
-        }
-
+    public findOneUser(@Param() getOneUserParamDto: GetOneUserParamDto) {
+        return this.usersService.findOneUser(getOneUserParamDto)
     }
 
     @Post()
-    public createUsers(@Body() creatUserDto: CreateUserDto) {
-        return {
-            body: creatUserDto
-        }
+    public createUser(@Body() createUserDto: CreateUserDto) {
+        return this.usersService.ceateUser(createUserDto)
     }
 
     @Patch(':id')
-    public updateUser(
-        @Param('id') id: string,
-        @Body() body: any
+    public patchUser(
+        @Param() getOneUserParamDto: GetOneUserParamDto,
+        @Body() patchUserDto: PatchUserDto
     ) {
-        return {
-            message: `User ${id} updated successfully`,
-            updates: body,
-        }
+        return this.usersService.patchUser(getOneUserParamDto, patchUserDto)
     }
 
     @Delete(':id')
-    public deleteUser(@Param('id') id: string) {
-        return `user with ${id} deleted`
+    public deleteUser(@Param() getOneUserParamDto: GetOneUserParamDto) {
+        return this.usersService.deleteUser(getOneUserParamDto)
     }
 }

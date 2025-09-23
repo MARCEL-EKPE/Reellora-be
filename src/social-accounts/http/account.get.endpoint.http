@@ -1,0 +1,4 @@
+## Get Request for SocialAccounts Controller
+
+GET http://localhost:3000/social-accounts/my
+Content-Type: application/json
