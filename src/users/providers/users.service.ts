@@ -1,13 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { GetAllUsersParamDto } from '../dtos/get-users.dto';
 import { GetOneUserParamDto } from '../dtos/get-one-user.dto';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { PatchUserDto } from '../dtos/patch-user.dto';
+import { AuthService } from 'src/auth/providers/auth.service';
+import { PatchUserPreferencesDTo } from '../dtos/patch-user-preferences.dto';
 
 @Injectable()
 export class UsersService {
+    constructor(
+        /**
+         * Injecting Auth Service 
+         */
+        @Inject(forwardRef(() => AuthService))
+        private readonly authService: AuthService
+    ) { }
 
     public async findAllUsers(getAllUsersParamDto: GetAllUsersParamDto) {
+        this.authService.isAuth()
         const { offset, limit } = getAllUsersParamDto
         return { offset, limit }
     }
@@ -27,6 +37,12 @@ export class UsersService {
         return {
             message: `User ${getOneUserParamDto.id} updated successfully`,
             updates: patchUserDto,
+        }
+    }
+    public async patchUserPreferences(patchUserPreferencesDto: PatchUserPreferencesDTo) {
+        return {
+            message: 'User preferences updated successfully',
+            updates: patchUserPreferencesDto,
         }
     }
 

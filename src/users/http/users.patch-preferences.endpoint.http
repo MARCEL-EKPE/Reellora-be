@@ -1,0 +1,10 @@
+## Update Request for Users Preferences Controller
+
+PATCH  http://localhost:3000/users/preferences
+Content-Type: application/json
+
+{
+    "frequencyOfUpload": 3,
+    "autoPost": false,
+    "replyTone": "WITTY"
+}

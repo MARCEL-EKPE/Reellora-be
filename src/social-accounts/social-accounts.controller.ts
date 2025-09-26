@@ -1,7 +1,6 @@
-import { Body, Controller, Get, Post, Req, Delete, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Delete, Param, Request } from '@nestjs/common';
 import { LinkYoutubeDto } from './dtos/link-youtube.dto';
 import { SelectChannelDto } from './dtos/select-channel.dto';
-import type { Request } from 'express';
 import { SocialAccountsService } from './providers/social-accounts.service';
 
 @Controller('social-accounts')

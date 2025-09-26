@@ -4,6 +4,7 @@ import { GetAllUsersParamDto } from './dtos/get-users.dto';
 import { GetOneUserParamDto } from './dtos/get-one-user.dto';
 import { PatchUserDto } from './dtos/patch-user.dto';
 import { UsersService } from './providers/users.service';
+import { PatchUserPreferencesDTo } from './dtos/patch-user-preferences.dto';
 
 @Controller('users')
 export class UsersController {
@@ -29,6 +30,13 @@ export class UsersController {
     @Post()
     public createUser(@Body() createUserDto: CreateUserDto) {
         return this.usersService.ceateUser(createUserDto)
+    }
+
+    @Patch('preferences')
+    public patchUserPreferences(
+        @Body() patchUserPreferencesDto: PatchUserPreferencesDTo
+    ) {
+        return this.usersService.patchUserPreferences(patchUserPreferencesDto)
     }
 
     @Patch(':id')
