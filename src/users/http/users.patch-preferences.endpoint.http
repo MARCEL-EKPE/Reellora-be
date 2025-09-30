@@ -4,7 +4,7 @@ PATCH  http://localhost:3000/users/preferences
 Content-Type: application/json
 
 {
-    "frequencyOfUpload": 3,
-    "autoPost": false,
+    "frequencyOfUpload": 2,
+    "autoPost": true,
     "replyTone": "WITTY"
 }

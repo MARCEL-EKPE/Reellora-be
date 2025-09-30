@@ -7,11 +7,11 @@ export class UserPreferencesDto {
     @IsNumber()
     @Min(0)
     @Max(3)
-    frequencyOfUpload: number;
+    frequencyOfUpload: number = 1;
 
     @ApiPropertyOptional({ example: true, description: 'Whether to auto-post content' })
     @IsBoolean()
-    autoPost: boolean;
+    autoPost: boolean = true;
 
     @ApiPropertyOptional({
         enum: ReplyTone,
@@ -19,6 +19,6 @@ export class UserPreferencesDto {
         description: 'Tone for replies in generated responses',
     })
     @IsEnum(ReplyTone, { message: 'replyTone must be one of: PROFESSIONAL, WITTY, HUMOROUS' })
-    replyTone: ReplyTone;
+    replyTone: ReplyTone = ReplyTone.PROFESSIONAL;
 
 }
