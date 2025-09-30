@@ -1,4 +1,4 @@
 ## Delete Request for Users Controller
 
-DELETE  http://localhost:3000/users/550e8400-e29b-41d4-a716-446655440000
+DELETE  http://localhost:3000/users/b00dc903-a563-41c0-856d-209aa2ad3967
 Content-Type: application/json

@@ -1,4 +1,4 @@
 ## Delete Request for SocialAccounts Controller
 
-DELETE  http://localhost:3000/social-accounts/12345
+DELETE  http://localhost:3000/social-accounts/94cfddeb-5101-4b54-b4e8-61e1cc54fdea
 Content-Type: application/json

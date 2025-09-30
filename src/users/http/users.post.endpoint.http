@@ -6,10 +6,10 @@ Content-Type: application/json
 {
     "email": "marcel@gmail.com",
     "userName": "Marcel",
-    "password": "marcelalexis1994#",
-    "preferences": {
-        "frequencyOfUpload": 1,
-        "autoPost": false,
-        "replyTone": "WITTY"
-    }
+    "password": "marcelalexis1994#"
+    // "preferences": {
+    //     "frequencyOfUpload": 1,
+    //     "autoPost": false,
+    //     "replyTone": "WITTY"
+    // }
 }

@@ -3,3 +3,5 @@
 GET http://localhost:3000/users
 ?offset=1
 &limit=20
+
+GET http://localhost:3000/users/b229f0df-4a5f-4999-b996-e30141424235

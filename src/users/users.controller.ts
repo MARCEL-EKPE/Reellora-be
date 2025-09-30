@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { GetAllUsersParamDto } from './dtos/get-users.dto';
 import { GetOneUserParamDto } from './dtos/get-one-user.dto';
@@ -8,7 +8,6 @@ import { PatchUserPreferencesDTo } from './dtos/patch-user-preferences.dto';
 
 @Controller('users')
 export class UsersController {
-
     constructor(
         /**
          * injecting usersService as a dependency
@@ -34,9 +33,11 @@ export class UsersController {
 
     @Patch('preferences')
     public patchUserPreferences(
+        @Req() req: Request,
         @Body() patchUserPreferencesDto: PatchUserPreferencesDTo
     ) {
-        return this.usersService.patchUserPreferences(patchUserPreferencesDto)
+        //TODO: get authenticated user id form req.user.id
+        return this.usersService.patchUserPreferences('b229f0df-4a5f-4999-b996-e30141424235', patchUserPreferencesDto)
     }
 
     @Patch(':id')

@@ -12,12 +12,12 @@ export class SocialAccountsController {
         private readonly socialAccountsService: SocialAccountsService
 
     ) { }
+
     @Get('my')
     getMyAccounts(@Req() req: Request) {
-        /**
-         * get authenticated user id form req.user.id
-         */
-        return this.socialAccountsService.getAccounts('authenticatedUserId');
+        //TODO: get authenticated user id form req.user.id
+
+        return this.socialAccountsService.getAccounts('b229f0df-4a5f-4999-b996-e30141424235');
     }
 
     @Post('youtube/link')
@@ -27,11 +27,15 @@ export class SocialAccountsController {
 
     @Post('youtube/save')
     async saveYoutubeChannel(@Req() req: Request, @Body() selectChannelDto: SelectChannelDto,) {
-        return this.socialAccountsService.saveYoutubeChannel('authenticatedUserId', selectChannelDto);
+
+        //TODO: get authenticated user id form req.user.id
+        return this.socialAccountsService.saveYoutubeChannel('98ef9bd1-bc22-4c48-bb40-2bd9da1f4903', selectChannelDto);
     }
 
     @Delete(':id')
     removeAccount(@Param('id') id: string, @Req() req: Request) {
-        return this.socialAccountsService.removeAccount(id, 'authenticatedUserId');
+        //TODO: get authenticated user id form req.user.id
+
+        return this.socialAccountsService.removeAccount(id, 'b229f0df-4a5f-4999-b996-e30141424235');
     }
 }

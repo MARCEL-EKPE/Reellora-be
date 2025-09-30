@@ -4,6 +4,13 @@ POST http://localhost:3000/social-accounts/youtube/link
 Content-Type: application/json
 
 {
+    "code": "1234567890",
+}
+
+POST http://localhost:3000/social-accounts/youtube/save
+Content-Type: application/json
+
+{
     "channelId": "1234567890",
     "channelName": "Marcelsnews",
     "niche": "news"

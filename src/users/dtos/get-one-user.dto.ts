@@ -3,7 +3,7 @@ import { IsUUID } from "class-validator";
 
 export class GetOneUserParamDto {
     @ApiProperty({
-        description: 'UUID string identifier'
+        description: 'string identifier'
     })
     @IsUUID()
     id: string;
