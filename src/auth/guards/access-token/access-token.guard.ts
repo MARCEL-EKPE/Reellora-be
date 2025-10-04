@@ -39,9 +39,9 @@ export class AccessTokenGuard implements CanActivate {
 
       request[REQUEST_USER_KEY] = payload;
       return true;
+
     } catch (error) {
-      console.error('JWT verification error:', error.message);
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('JWT verification error:', error.message);
     }
 
   }
