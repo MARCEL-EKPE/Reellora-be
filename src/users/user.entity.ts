@@ -40,9 +40,11 @@ export class User {
     })
     channels: SocialAccounts[];
 
+    @Exclude()
     @CreateDateColumn()
     createdAt: Date;
 
+    @Exclude()
     @UpdateDateColumn()
     updatedAt: Date;
 } 

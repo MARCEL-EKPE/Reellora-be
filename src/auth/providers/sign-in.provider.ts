@@ -1,0 +1,91 @@
+import { forwardRef, Inject, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { SignInDto } from '../dtos/signin.dto';
+import { UsersService } from 'src/users/providers/users.service';
+import { HashingProvider } from './hashing.provider';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService, type ConfigType } from '@nestjs/config';
+import jwtConfig from '../config/jwt.config';
+
+@Injectable()
+export class SignInProvider {
+
+    constructor(
+
+        /**
+         * Injecting usersService
+         */
+        @Inject(forwardRef(() => UsersService))
+        private readonly usersService: UsersService,
+
+        /**
+         * Injecting hashingProvider
+         */
+        private readonly hashinProvider: HashingProvider,
+
+        /**
+         * Injecting jwtService
+         */
+        private readonly jwtService: JwtService,
+
+        /**
+         * Injecting jwtConfiguration
+         */
+        @Inject(jwtConfig.KEY)
+        private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
+
+        /**
+         * Injecting cofigService 
+         */
+        private readonly configService: ConfigService
+    ) { }
+
+    public async signIn(signInDto: SignInDto) {
+        // find the user using email
+        const user = await this.usersService.findOneUserByEmail(signInDto.email)
+
+        if (!user) {
+            throw new UnauthorizedException('Invalid credentials');
+        }
+
+        // compare password
+        let isVerified: boolean = false
+
+        try {
+            isVerified = await this.hashinProvider.comparePassword(signInDto.password, user.password)
+
+        } catch (error) {
+
+            throw new InternalServerErrorException('Password comparison failed');
+        }
+
+        if (!isVerified) {
+            throw new UnauthorizedException('Invalid credentials')
+        }
+
+        const accessToken = await this.jwtService.signAsync(
+            {
+                sub: user.id,
+                email: user.email
+            },
+            {
+                audience: this.jwtConfiguration.audience,
+                issuer: this.jwtConfiguration.issuer,
+                secret: this.jwtConfiguration.secret,
+                expiresIn: this.jwtConfiguration.accessTokenTtl,
+            }
+            // {
+            //     audience: this.configService.get('jwt.audience'),
+            //     issuer: this.configService.get('jwt.issuer'),
+            //     secret: this.configService.get('jwt.secret'),
+            //     expiresIn: this.configService.get('jwt.accessTokenTtl'),
+            // }
+
+        )
+
+        return {
+            accessToken
+        };
+
+    }
+
+}

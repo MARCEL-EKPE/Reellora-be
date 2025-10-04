@@ -1,7 +1,6 @@
 ## Get Request for Users Controller
 
-GET http://localhost:3000/users
-?offset=1
-&limit=20
+GET http://localhost:3000/users?page=1&limit=1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNTkxMTdhNi0wNGUyLTQwNTEtYTliOS1jYjUwMjRkMTdlM2EiLCJlbWFpbCI6Im1hcmNlbEBnbWFpbC5jb20iLCJpYXQiOjE3NTk1NjUzMDcsImV4cCI6MTc1OTU2ODkwNywiYXVkIjoibG9jYWxob3N0OjMwMDAiLCJpc3MiOiJsb2NhbGhvc3Q6MzAwMCJ9.qceWcCWAqRg55cZ0Lx4Zuc8nBULS41VViShOsmO8lfA
 
 GET http://localhost:3000/users/b229f0df-4a5f-4999-b996-e30141424235

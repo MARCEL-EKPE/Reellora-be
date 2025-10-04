@@ -1,9 +1,9 @@
 ## Update Request for Users Controller
 
-PATCH  http://localhost:3000/users/550e8400-e29b-41d4-a716-446655440000
+PATCH  http://localhost:3000/users/98ef9bd1-bc22-4c48-bb40-2bd9da1f4903
 Content-Type: application/json
 
 {
     "email": "marcel@gmail.com",
-    "userName": "Marcel"
+    "userName": "marcelalexis"
 }

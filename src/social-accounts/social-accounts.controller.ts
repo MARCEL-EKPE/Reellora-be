@@ -29,13 +29,13 @@ export class SocialAccountsController {
     async saveYoutubeChannel(@Req() req: Request, @Body() selectChannelDto: SelectChannelDto,) {
 
         //TODO: get authenticated user id form req.user.id
-        return this.socialAccountsService.saveYoutubeChannel('98ef9bd1-bc22-4c48-bb40-2bd9da1f4903', selectChannelDto);
+        return this.socialAccountsService.saveYoutubeChannel('2a3220a6-307b-42e4-911f-0b9ceb163a49', selectChannelDto);
     }
 
     @Delete(':id')
     removeAccount(@Param('id') id: string, @Req() req: Request) {
         //TODO: get authenticated user id form req.user.id
 
-        return this.socialAccountsService.removeAccount(id, 'b229f0df-4a5f-4999-b996-e30141424235');
+        return this.socialAccountsService.removeAccount(id, '98ef9bd1-bc22-4c48-bb40-2bd9da1f4903');
     }
 }

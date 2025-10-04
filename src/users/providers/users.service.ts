@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { GetAllUsersParamDto } from '../dtos/get-users.dto';
 import { GetOneUserParamDto } from '../dtos/get-one-user.dto';
 import { CreateUserDto } from '../dtos/create-user.dto';
@@ -8,7 +8,8 @@ import { PatchUserPreferencesDTo } from '../dtos/patch-user-preferences.dto';
 import { Repository } from 'typeorm';
 import { User } from '../user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { response } from 'express';
+import { CreateUserProvider } from './create-user.provider';
+import { FindOneUserByEmailProvider } from './find-one-user-by-email.provider';
 
 /**
  * Service class for '/users' controller
@@ -26,95 +27,188 @@ export class UsersService {
          * Injecting usersRepository
          */
         @InjectRepository(User)
-        private readonly usersRepository: Repository<User>
+        private readonly usersRepository: Repository<User>,
+
+        /**
+         * Injecting createUserProvider
+         */
+        private readonly createUserProvider: CreateUserProvider,
+
+        /**
+         * Injecting findOneUserByEmail
+         */
+        private readonly findOneUserByEmailProvider: FindOneUserByEmailProvider
     ) { }
 
     public async findAllUsers(getAllUsersParamDto: GetAllUsersParamDto) {
-        this.authService.isAuth()
-        const { offset, limit } = getAllUsersParamDto
-        return { offset, limit }
-    }
 
-    public async findOneUser(getOneUserParamDto: GetOneUserParamDto) {
-        const { id } = getOneUserParamDto
+        try {
+            const { page = 1, limit = 10 } = getAllUsersParamDto
 
-        const user = await this.usersRepository.findOne({
-            where: { id },
-            relations: ['channels'],
-        });
-        if (!user) {
-            throw new NotFoundException('user not found')
+            const [users, total] = await this.usersRepository.findAndCount({
+                skip: (page - 1) * limit,
+                take: limit,
+                order: { createdAt: 'DESC' }
+            });
+
+            if (users.length === 0) {
+                return {};
+            }
+
+            return {
+                total,
+                page,
+                limit,
+                data: users,
+            };
+
+        } catch (error) {
+
+            // Todo:Use NestJS logger 
+            console.error('Failed to fetch users:', error);
+
+            throw new InternalServerErrorException('Failed to fetch users.');
         }
 
-        return user
     }
 
-    public async ceateUser(createUserDto: CreateUserDto) {
-        // check whether user exist with thesame email in the database
-        const existingUser = await this.usersRepository.findOne({
-            where: { email: createUserDto.email },
-        })
-        // handle exception 
+    public async findOneUser(getOneUserParamDto: GetOneUserParamDto): Promise<User> {
+        const { id } = getOneUserParamDto
 
-        // create new user'
-        let newUser = this.usersRepository.create(createUserDto);
-        newUser = await this.usersRepository.save(newUser)
+        try {
+            const user = await this.usersRepository.findOne({
+                where: { id },
+                relations: ['channels'],
+            });
 
-        return newUser;
+            if (!user) {
+                throw new NotFoundException('user not found')
+            }
+
+            return user
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error
+            }
+
+            // Todo:Use NestJS logger 
+            console.error('Error finding user:', error);
+
+            throw new InternalServerErrorException('Failed to find user.');
+
+        }
     }
 
-    public async patchUser(getOneUserParamDto: GetOneUserParamDto, patchUserDto: PatchUserDto) {
+    public async ceateUser(createUserDto: CreateUserDto): Promise<User> {
+
+        return this.createUserProvider.ceateUser(createUserDto)
+    }
+
+    public async patchUser(getOneUserParamDto: GetOneUserParamDto, patchUserDto: PatchUserDto)
+        : Promise<{ message: string, user: User }> {
 
         const { id } = getOneUserParamDto
-        const user = await this.usersRepository.findOne({ where: { id } })
 
-        if (!user) throw new NotFoundException(`user with ${id} not found`)
+        try {
+            const user = await this.usersRepository.findOne({ where: { id } })
 
-        Object.assign(user, patchUserDto)
+            if (!user) {
+                throw new NotFoundException(`user with ${id} not found`)
+            }
 
-        const updatedUser = await this.usersRepository.save(user);
+            Object.assign(user, patchUserDto)
+            const updatedUser = await this.usersRepository.save(user);
 
-        return {
-            message: `User ${id} updated successfully`,
-            user: updatedUser,
-        };
+            return {
+                message: `user updated successfully`,
+                user: updatedUser,
+            };
+
+        } catch (error) {
+
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            // Todo:Use NestJS logger 
+            console.error('Failed to update user:', error);
+
+            throw new InternalServerErrorException('Failed to update user.');
+
+        }
     }
+
     public async patchUserPreferences(
         id: string,
         patchUserPreferencesDto: PatchUserPreferencesDTo
-    ) {
+    ): Promise<{ message: string, preferences: PatchUserPreferencesDTo }> {
 
-        const user = await this.usersRepository.findOne({ where: { id } });
+        try {
+            const user = await this.usersRepository.findOne({ where: { id } });
 
-        if (!user) {
-            throw new NotFoundException(`User with ID ${id} not found`);
+            if (!user) {
+                throw new NotFoundException(`User with ID ${id} was not found.`);
+            }
+
+            user.preferences = {
+                ...user.preferences,
+                ...patchUserPreferencesDto,
+            };
+
+            const updatedUser = await this.usersRepository.save(user);
+
+            return {
+                message: 'User preferences updated successfully.',
+                preferences: updatedUser.preferences as PatchUserPreferencesDTo
+            };
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            // Todo:Use NestJS logger 
+            console.error('Failed to update user preferences:', error);
+
+            throw new InternalServerErrorException(
+                'Failed to update user preferences.',
+            );
         }
-
-        user.preferences = {
-            ...user.preferences,
-            ...patchUserPreferencesDto,
-        };
-
-        const updatedUser = await this.usersRepository.save(user);
-
-        return {
-            message: 'User preferences updated successfully',
-            preferences: updatedUser.preferences,
-        };
     }
 
-    public async deleteUser(getOneUserParamDto: GetOneUserParamDto) {
+    public async deleteUser(getOneUserParamDto: GetOneUserParamDto): Promise<{ message: string, user: User }> {
 
         const { id } = getOneUserParamDto;
 
-        const user = await this.usersRepository.findOne({ where: { id } });
+        try {
+            const user = await this.usersRepository.findOne({ where: { id } });
 
-        if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+            if (!user) {
+                throw new NotFoundException(`User with ID ${id} was not found.`);
+            }
 
-        await this.usersRepository.remove(user);
+            await this.usersRepository.remove(user);
 
-        return {
-            message: `User with ID ${id} deleted successfully`,
-        };
+            return {
+                message: `user deleted successfully.`,
+                user
+            };
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            // Todo:Use NestJS logger
+            console.error('Failed to delete user:', error);
+
+            throw new InternalServerErrorException('Failed to delete user. Please try again later.');
+        }
     }
+
+    public async findOneUserByEmail(email: string): Promise<User> {
+
+        return this.findOneUserByEmailProvider.findOneByEmail(email)
+
+    }
+
+
 }

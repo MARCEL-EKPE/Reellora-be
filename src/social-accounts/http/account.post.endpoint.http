@@ -11,7 +11,7 @@ POST http://localhost:3000/social-accounts/youtube/save
 Content-Type: application/json
 
 {
-    "channelId": "1234567890",
-    "channelName": "Marcelsnews",
-    "niche": "news"
+    "channelId": "987654321",
+    "channelName": "techWorld",
+    "niche": "education"
 }
