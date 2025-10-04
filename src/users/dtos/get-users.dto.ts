@@ -1,19 +1,16 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { Type } from "class-transformer";
 import { IsInt, IsOptional, Min, } from "class-validator";
 
 export class GetAllUsersParamDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({ description: 'Page number (default: 1)' })
     @IsOptional()
-    @Type(() => Number)
     @IsInt()
     @Min(1)
-    offset?: number = 1
+    page?: number = 1
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({ description: 'Items per page (default: 10)' })
     @IsOptional()
-    @Type(() => Number)
     @IsInt()
     @Min(1)
-    limit?: number = 20;
+    limit?: number = 10;
 }

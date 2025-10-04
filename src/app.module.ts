@@ -6,22 +6,29 @@ import { SocialAccountsModule } from './social-accounts/social-accounts.module';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import databaseConfig from './config/database.config';
+import envValidation from './config/env.validation';
 
 @Module({
-  imports: [UsersModule, SocialAccountsModule, AuthModule, ConfigModule.forRoot({ isGlobal: true }),
+  imports: [UsersModule, SocialAccountsModule, AuthModule, ConfigModule.forRoot({
+    isGlobal: true,
+    load: [databaseConfig],
+    envFilePath: '',
+    validationSchema: envValidation
+  }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: configService.get('DB_PORT'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_DATABASE'),
-        synchronize: true,
-        autoLoadEntities: true,
-        logging: true
+        host: configService.get('database.host'),
+        port: configService.get('database.port'),
+        username: configService.get('database.username'),
+        password: configService.get('database.password'),
+        database: configService.get('database.database'),
+        synchronize: configService.get('database.synchronize'),
+        autoLoadEntities: configService.get('database.autoLoadEntities'),
+        // logging: true
       })
     })],
   controllers: [AppController],

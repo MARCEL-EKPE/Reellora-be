@@ -1,0 +1,17 @@
+## Post Request for Auth Controller
+
+POST http://localhost:3000/auth/sign-in
+Content-Type: application/json
+
+// {
+//     "email": "johndoe@gmail.com",
+//     "password": "JohnDoe123#"
+  
+// }
+
+{
+    "email": "marcel@gmail.com",
+    "password": "marcelalexis1994#"
+  
+}
+
