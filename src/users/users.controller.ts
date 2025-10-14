@@ -1,11 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards, } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { GetAllUsersParamDto } from './dtos/get-users.dto';
 import { GetOneUserParamDto } from './dtos/get-one-user.dto';
 import { PatchUserDto } from './dtos/patch-user.dto';
 import { UsersService } from './providers/users.service';
 import { PatchUserPreferencesDTo } from './dtos/patch-user-preferences.dto';
-import { AccessTokenGuard } from 'src/auth/guards/access-token/access-token.guard';
+import { CurrentUserData } from 'src/auth/decorators/current-user-data.decorator';
+import { type CurrentUser } from 'src/auth/interfaces/current-user.interface';
 
 @Controller('users')
 export class UsersController {
@@ -17,7 +18,6 @@ export class UsersController {
 
     ) { }
 
-    @UseGuards(AccessTokenGuard)
     @Get()
     public findAllUsers(@Query() getAllUsersParamDto: GetAllUsersParamDto) {
         return this.usersService.findAllUsers(getAllUsersParamDto)
@@ -35,19 +35,18 @@ export class UsersController {
 
     @Patch('preferences')
     public patchUserPreferences(
-        @Req() req: Request,
+        @CurrentUserData() user: CurrentUser,
         @Body() patchUserPreferencesDto: PatchUserPreferencesDTo
     ) {
-        //TODO: get authenticated user id form req.user.id
-        return this.usersService.patchUserPreferences('98ef9bd1-bc22-4c48-bb40-2bd9da1f4903', patchUserPreferencesDto)
+        return this.usersService.patchUserPreferences(user.sub, patchUserPreferencesDto)
     }
 
-    @Patch(':id')
+    @Patch('me')
     public patchUser(
-        @Param() getOneUserParamDto: GetOneUserParamDto,
+        @CurrentUserData() user: CurrentUser,
         @Body() patchUserDto: PatchUserDto
     ) {
-        return this.usersService.patchUser(getOneUserParamDto, patchUserDto)
+        return this.usersService.patchUser(user.sub, patchUserDto)
     }
 
     @Delete(':id')

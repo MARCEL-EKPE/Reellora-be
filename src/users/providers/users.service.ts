@@ -104,10 +104,8 @@ export class UsersService {
         return this.createUserProvider.ceateUser(createUserDto)
     }
 
-    public async patchUser(getOneUserParamDto: GetOneUserParamDto, patchUserDto: PatchUserDto)
+    public async patchUser(id: string, patchUserDto: PatchUserDto)
         : Promise<{ message: string, user: User }> {
-
-        const { id } = getOneUserParamDto
 
         try {
             const user = await this.usersRepository.findOne({ where: { id } })

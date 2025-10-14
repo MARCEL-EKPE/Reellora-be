@@ -8,6 +8,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import databaseConfig from './config/database.config';
 import envValidation from './config/env.validation';
+import jwtConfig from './auth/config/jwt.config';
+import { JwtModule } from '@nestjs/jwt';
+import { APP_GUARD } from '@nestjs/core';
+import { AccessTokenGuard } from './auth/guards/access-token/access-token.guard';
+import { AuthenticationGuard } from './auth/guards/authentication.guard';
 
 @Module({
   imports: [UsersModule, SocialAccountsModule, AuthModule, ConfigModule.forRoot({
@@ -30,8 +35,11 @@ import envValidation from './config/env.validation';
         autoLoadEntities: configService.get('database.autoLoadEntities'),
         // logging: true
       })
-    })],
+    }),
+    ConfigModule.forFeature(jwtConfig),
+    JwtModule.registerAsync(jwtConfig.asProvider())
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: AuthenticationGuard }, AccessTokenGuard],
 })
 export class AppModule { }

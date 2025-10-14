@@ -1,9 +1,10 @@
 ## Update Request for Users Controller
 
-PATCH  http://localhost:3000/users/98ef9bd1-bc22-4c48-bb40-2bd9da1f4903
+PATCH  http://localhost:3000/users/me
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNTkxMTdhNi0wNGUyLTQwNTEtYTliOS1jYjUwMjRkMTdlM2EiLCJlbWFpbCI6Im1hcmNlbEBnbWFpbC5jb20iLCJpYXQiOjE3NjA0MzQ3MjksImV4cCI6MTc2MDQzODMyOSwiYXVkIjoibG9jYWxob3N0OjMwMDAiLCJpc3MiOiJsb2NhbGhvc3Q6MzAwMCJ9.7onEw4D9aTjqDZq4HQl5_1vc2QTC9y2CJ82sbbdGf2E
 
 {
     "email": "marcel@gmail.com",
-    "userName": "marcelalexis"
+    "userName": "Marcelalexis"
 }

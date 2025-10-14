@@ -2,9 +2,11 @@
 
 PATCH  http://localhost:3000/users/preferences
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNTkxMTdhNi0wNGUyLTQwNTEtYTliOS1jYjUwMjRkMTdlM2EiLCJlbWFpbCI6Im1hcmNlbEBnbWFpbC5jb20iLCJpYXQiOjE3NjAzNzM5OTIsImV4cCI6MTc2MDM3NzU5MiwiYXVkIjoibG9jYWxob3N0OjMwMDAiLCJpc3MiOiJsb2NhbGhvc3Q6MzAwMCJ9.xutKMtpG_3MIfh2W3qoMDAmVEUk9cNb_CKW9kobX97Q
 
 {
-    "frequencyOfUpload": 2,
-    "autoPost": true,
+    "frequencyOfUpload": "3",
+    "autoPost": "true",
     "replyTone": "WITTY"
+
 }
