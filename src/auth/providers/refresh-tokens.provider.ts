@@ -32,11 +32,9 @@ export class RefreshTokensProvider {
         @Inject(forwardRef(() => UsersService))
         private readonly usersService: UsersService,
 
-
     ) { }
 
     public async refreshTokens(refreshTokenDto: RefreshTokenDto) {
-
 
         try {
             const { sub } = await this.jwtService.verifyAsync(refreshTokenDto.refreshToken, {
@@ -51,5 +49,6 @@ export class RefreshTokensProvider {
         } catch (error) {
             throw new UnauthorizedException(error)
         }
+
     }
 }
