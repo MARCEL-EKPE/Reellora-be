@@ -20,8 +20,13 @@ export class User {
 
     @Exclude()
     @ApiProperty({ example: '$2b$10$xyz...' })
-    @Column()
+    @Column({ nullable: true })
     password: string;
+
+    @Exclude()
+    @ApiProperty()
+    @Column({ nullable: true })
+    googleId?: string;
 
     @ApiProperty({
         description: 'User preferences stored as JSON',

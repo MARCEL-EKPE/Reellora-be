@@ -10,6 +10,7 @@ import { User } from '../user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserProvider } from './create-user.provider';
 import { FindOneUserByEmailProvider } from './find-one-user-by-email.provider';
+import { FindOneUserByGoogleIdProvider } from './find-one-user-by-google-id.provider';
 
 /**
  * Service class for '/users' controller
@@ -37,7 +38,12 @@ export class UsersService {
         /**
          * Injecting findOneUserByEmail
          */
-        private readonly findOneUserByEmailProvider: FindOneUserByEmailProvider
+        private readonly findOneUserByEmailProvider: FindOneUserByEmailProvider,
+
+        /**
+         * Injecting findOneUserByGoogleIdProvider
+         */
+        private readonly findOneUserByGoogleIdProvider: FindOneUserByGoogleIdProvider
     ) { }
 
     public async findAllUsers(getAllUsersParamDto: GetAllUsersParamDto) {
@@ -205,6 +211,12 @@ export class UsersService {
     public async findOneUserByEmail(email: string): Promise<User> {
 
         return this.findOneUserByEmailProvider.findOneByEmail(email)
+
+    }
+
+    public async findOneUserByGoogleId(googleId: string): Promise<User | null> {
+
+        return this.findOneUserByGoogleIdProvider.findOneUserByGoogleId(googleId)
 
     }
 
