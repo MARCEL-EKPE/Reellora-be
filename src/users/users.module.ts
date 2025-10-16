@@ -7,10 +7,11 @@ import { User } from './user.entity';
 import { CreateUserProvider } from './providers/create-user.provider';
 import { FindOneUserByEmailProvider } from './providers/find-one-user-by-email.provider';
 import { FindOneUserByGoogleIdProvider } from './providers/find-one-user-by-google-id.provider';
+import { CreateGoogleUserProvider } from './providers/create-google-user.provider';
 
 @Module({
   controllers: [UsersController],
-  providers: [UsersService, CreateUserProvider, FindOneUserByEmailProvider, FindOneUserByGoogleIdProvider],
+  providers: [UsersService, CreateUserProvider, FindOneUserByEmailProvider, FindOneUserByGoogleIdProvider, CreateGoogleUserProvider],
   exports: [UsersService],
   imports: [forwardRef(() => AuthModule),
   TypeOrmModule.forFeature([User]),

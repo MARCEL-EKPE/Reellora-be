@@ -5,7 +5,6 @@ import jwtConfig from 'src/auth/config/jwt.config';
 import { GoogleTokenDto } from '../dtos/google-token.dto';
 import { UsersService } from 'src/users/providers/users.service';
 import { GenerateTokensProvider } from 'src/auth/providers/generate-tokens.provider';
-import { User } from 'src/users/user.entity';
 
 @Injectable()
 export class GoogleAuthenticationService implements OnModuleInit {
@@ -38,24 +37,37 @@ export class GoogleAuthenticationService implements OnModuleInit {
     }
 
     public async authenticate(googleTokenDto: GoogleTokenDto) {
-        // Verify the Google token sent by the user
-        const loginTicket = await this.oauthClient.verifyIdToken({ idToken: googleTokenDto.token });
 
-        // Extract payload from Google JWT
-        const { email, sub: googleId } = loginTicket.getPayload() ?? {};
+        try {
+            // Verify the Google token sent by the user
+            const loginTicket = await this.oauthClient.verifyIdToken({ idToken: googleTokenDto.token });
+            // Extract payload from Google JWT
+            const { email, sub: googleId, given_name: userName, picture } = loginTicket.getPayload() ?? {};
 
-        if (!googleId || !email) {
-            throw new NotFoundException('Invalid Google account information');
+            if (!googleId || !email) {
+                throw new NotFoundException('Invalid Google account information');
+            }
+
+            // Find the user in the database using googleId
+            let user = await this.usersService.findOneUserByGoogleId(googleId);
+
+            if (!user) {
+                user = await this.usersService.createGoogleUser({
+                    email: email,
+                    userName: userName ?? '',
+                    googleId: googleId,
+                    picture: picture ?? '',
+                })
+            }
+
+            // Return generated tokens
+            return this.generateTokensProvider.generateTokens(user!);
+
+        } catch (error) {
+
+            throw new NotFoundException(error, { description: 'Invalid or expired Google token' });
+
         }
 
-        // Find the user in the database using googleId
-        const user: User | null = await this.usersService.findOneUserByGoogleId(googleId);
-
-        if (!user) {
-            throw new NotFoundException(`User with Google ID ${googleId} not found`);
-        }
-
-        // Return generated tokens
-        return this.generateTokensProvider.generateTokens(user);
     }
 }

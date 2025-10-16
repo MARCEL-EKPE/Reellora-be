@@ -52,7 +52,10 @@ export class SignInProvider {
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
-
+        // Check if user has a password (for social login users who might not have passwords)
+        if (!user.password) {
+            throw new UnauthorizedException('Invalid credentials');
+        }
         // compare password
         let isVerified: boolean = false
 

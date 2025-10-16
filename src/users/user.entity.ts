@@ -21,7 +21,7 @@ export class User {
     @Exclude()
     @ApiProperty({ example: '$2b$10$xyz...' })
     @Column({ nullable: true })
-    password: string;
+    password?: string;
 
     @Exclude()
     @ApiProperty()
@@ -44,6 +44,11 @@ export class User {
         cascade: true,
     })
     channels: SocialAccounts[];
+
+    @Exclude()
+    @ApiProperty()
+    @Column({ nullable: true })
+    picture?: string
 
     @Exclude()
     @CreateDateColumn()

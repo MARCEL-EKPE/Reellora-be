@@ -11,6 +11,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserProvider } from './create-user.provider';
 import { FindOneUserByEmailProvider } from './find-one-user-by-email.provider';
 import { FindOneUserByGoogleIdProvider } from './find-one-user-by-google-id.provider';
+import { CreateGoogleUserProvider } from './create-google-user.provider';
+import { GoogleUser } from '../interfaces/google-user.interface';
 
 /**
  * Service class for '/users' controller
@@ -43,7 +45,11 @@ export class UsersService {
         /**
          * Injecting findOneUserByGoogleIdProvider
          */
-        private readonly findOneUserByGoogleIdProvider: FindOneUserByGoogleIdProvider
+        private readonly findOneUserByGoogleIdProvider: FindOneUserByGoogleIdProvider,
+        /**
+         * Injecting createGoogleUserProvider
+         */
+        private readonly createGoogleUserProvider: CreateGoogleUserProvider,
     ) { }
 
     public async findAllUsers(getAllUsersParamDto: GetAllUsersParamDto) {
@@ -217,6 +223,11 @@ export class UsersService {
     public async findOneUserByGoogleId(googleId: string): Promise<User | null> {
 
         return this.findOneUserByGoogleIdProvider.findOneUserByGoogleId(googleId)
+
+    }
+    public async createGoogleUser(googleUser: GoogleUser): Promise<User | null> {
+
+        return this.createGoogleUserProvider.createGoogleUser(googleUser)
 
     }
 
