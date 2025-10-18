@@ -28,6 +28,11 @@ export class User {
     @Column({ nullable: true })
     googleId?: string;
 
+    @Exclude()
+    @ApiProperty()
+    @Column({ nullable: true })
+    facebookId?: string;
+
     @ApiProperty({
         description: 'User preferences stored as JSON',
         type: () => UserPreferencesDto,
