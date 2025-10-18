@@ -12,13 +12,15 @@ import { GenerateTokensProvider } from './providers/generate-tokens.provider';
 import { RefreshTokensProvider } from './providers/refresh-tokens.provider';
 import { GoogleAuthenticationController } from './social/google-authentication.controller';
 import { GoogleAuthenticationService } from './social/providers/google-authentication.service';
+import { FacebookAuthenticationController } from './social/facebook-authentication.controller';
+import { FacebookAuthenticationService } from './social/providers/facebook-authentication.service';
 
 @Module({
-  controllers: [AuthController, GoogleAuthenticationController],
+  controllers: [AuthController, GoogleAuthenticationController, FacebookAuthenticationController],
   providers: [AuthService, {
     provide: HashingProvider,
     useClass: Argon2Provider
-  }, SignInProvider, GenerateTokensProvider, RefreshTokensProvider, GoogleAuthenticationService
+  }, SignInProvider, GenerateTokensProvider, RefreshTokensProvider, GoogleAuthenticationService, FacebookAuthenticationService
   ],
   imports: [forwardRef(() => UsersModule),
   ConfigModule.forFeature(jwtConfig),

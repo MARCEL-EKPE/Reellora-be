@@ -13,6 +13,9 @@ import { FindOneUserByEmailProvider } from './find-one-user-by-email.provider';
 import { FindOneUserByGoogleIdProvider } from './find-one-user-by-google-id.provider';
 import { CreateGoogleUserProvider } from './create-google-user.provider';
 import { GoogleUser } from '../interfaces/google-user.interface';
+import { FindOneUserByFacebookIdProvider } from './find-one-user-by-facebook-id.provider';
+import { CreateFacebookUserProvider } from './create-facebook-user.provider';
+import { FacebookUser } from '../interfaces/facebook-user.interface';
 
 /**
  * Service class for '/users' controller
@@ -49,7 +52,21 @@ export class UsersService {
         /**
          * Injecting createGoogleUserProvider
          */
+
+        /**
+         * Injecting findOneUserByFacebookIdProvider
+         */
+        private readonly findOneUserByFacebookIdProvider: FindOneUserByFacebookIdProvider,
+
+        /**
+        * Injecting createGoogleUserProvider
+        */
         private readonly createGoogleUserProvider: CreateGoogleUserProvider,
+
+        /**
+         * Injecting createFacebookUserProvider
+         */
+        private readonly createFacebookUserProvider: CreateFacebookUserProvider
     ) { }
 
     public async findAllUsers(getAllUsersParamDto: GetAllUsersParamDto) {
@@ -225,11 +242,20 @@ export class UsersService {
         return this.findOneUserByGoogleIdProvider.findOneUserByGoogleId(googleId)
 
     }
+
+    public async findOneUserByFacebookId(facebookId: string) {
+
+        return this.findOneUserByFacebookIdProvider.findOneByFacebookId(facebookId)
+    }
+
     public async createGoogleUser(googleUser: GoogleUser): Promise<User | null> {
 
         return this.createGoogleUserProvider.createGoogleUser(googleUser)
 
     }
 
+    public async createFacebookUser(facebookUser: FacebookUser) {
 
+        return this.createFacebookUserProvider.createFacebookUser(facebookUser)
+    }
 }

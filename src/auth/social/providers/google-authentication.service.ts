@@ -65,7 +65,7 @@ export class GoogleAuthenticationService implements OnModuleInit {
 
         } catch (error) {
 
-            throw new NotFoundException(error, { description: 'Invalid or expired Google token' });
+            throw new NotFoundException('Invalid or expired Google token');
 
         }
 
