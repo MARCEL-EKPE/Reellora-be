@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, ClassSerializerInterceptor, Controller, Delete, Get, Param, Patch, Post, Query, UseInterceptors } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { GetAllUsersParamDto } from './dtos/get-users.dto';
 import { GetOneUserParamDto } from './dtos/get-one-user.dto';
@@ -7,6 +7,8 @@ import { UsersService } from './providers/users.service';
 import { PatchUserPreferencesDTo } from './dtos/patch-user-preferences.dto';
 import { CurrentUserData } from 'src/auth/decorators/current-user-data.decorator';
 import { type CurrentUser } from 'src/auth/interfaces/current-user.interface';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { AuthType } from 'src/auth/enums/auth-type.enum';
 
 @Controller('users')
 export class UsersController {
@@ -28,6 +30,8 @@ export class UsersController {
         return this.usersService.findOneUser(getOneUserParamDto)
     }
 
+    @Auth(AuthType.None)
+    @UseInterceptors(ClassSerializerInterceptor)
     @Post()
     public createUser(@Body() createUserDto: CreateUserDto) {
         return this.usersService.ceateUser(createUserDto)

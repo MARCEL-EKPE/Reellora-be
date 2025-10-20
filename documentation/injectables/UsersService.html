@@ -119,6 +119,13 @@
         </p>
 
 
+            <p class="comment">
+                <h3>Description</h3>
+            </p>
+            <p class="comment">
+                <p>Service class for &#39;/users&#39; controller</p>
+
+            </p>
 
 
 
@@ -143,6 +150,16 @@
                             <li>
                                     <span class="modifier">Public</span>
                                     <span class="modifier">Async</span>
+                                <a href="#createFacebookUser" >createFacebookUser</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Public</span>
+                                    <span class="modifier">Async</span>
+                                <a href="#createGoogleUser" >createGoogleUser</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Public</span>
+                                    <span class="modifier">Async</span>
                                 <a href="#deleteUser" >deleteUser</a>
                             </li>
                             <li>
@@ -154,6 +171,21 @@
                                     <span class="modifier">Public</span>
                                     <span class="modifier">Async</span>
                                 <a href="#findOneUser" >findOneUser</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Public</span>
+                                    <span class="modifier">Async</span>
+                                <a href="#findOneUserByEmail" >findOneUserByEmail</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Public</span>
+                                    <span class="modifier">Async</span>
+                                <a href="#findOneUserByFacebookId" >findOneUserByFacebookId</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Public</span>
+                                    <span class="modifier">Async</span>
+                                <a href="#findOneUserByGoogleId" >findOneUserByGoogleId</a>
                             </li>
                             <li>
                                     <span class="modifier">Public</span>
@@ -183,12 +215,12 @@
             <tbody>
                 <tr>
                     <td class="col-md-4">
-<code>constructor(authService: <a href="../injectables/AuthService.html" target="_self">AuthService</a>)</code>
+<code>constructor(authService: <a href="../injectables/AuthService.html" target="_self">AuthService</a>, usersRepository: <a href="../entitys/User.html" target="_self">Repository&lt;User&gt;</a>, createUserProvider: <a href="../injectables/CreateUserProvider.html" target="_self">CreateUserProvider</a>, findOneUserByEmailProvider: <a href="../injectables/FindOneUserByEmailProvider.html" target="_self">FindOneUserByEmailProvider</a>, findOneUserByGoogleIdProvider: <a href="../injectables/FindOneUserByGoogleIdProvider.html" target="_self">FindOneUserByGoogleIdProvider</a>, findOneUserByFacebookIdProvider: <a href="../injectables/FindOneUserByFacebookIdProvider.html" target="_self">FindOneUserByFacebookIdProvider</a>, createGoogleUserProvider: <a href="../injectables/CreateGoogleUserProvider.html" target="_self">CreateGoogleUserProvider</a>, createFacebookUserProvider: <a href="../injectables/CreateFacebookUserProvider.html" target="_self">CreateFacebookUserProvider</a>)</code>
                     </td>
                 </tr>
                         <tr>
                             <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="10" class="link-to-prism">src/users/providers/users.service.ts:10</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="24" class="link-to-prism">src/users/providers/users.service.ts:24</a></div>
                             </td>
                         </tr>
 
@@ -210,6 +242,90 @@
                                                   
                                                         <td>
                                                                         <code><a href="../injectables/AuthService.html" target="_self" >AuthService</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                        <td>usersRepository</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../entitys/User.html" target="_self" >Repository&lt;User&gt;</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                        <td>createUserProvider</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../injectables/CreateUserProvider.html" target="_self" >CreateUserProvider</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                        <td>findOneUserByEmailProvider</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../injectables/FindOneUserByEmailProvider.html" target="_self" >FindOneUserByEmailProvider</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                        <td>findOneUserByGoogleIdProvider</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../injectables/FindOneUserByGoogleIdProvider.html" target="_self" >FindOneUserByGoogleIdProvider</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                        <td>findOneUserByFacebookIdProvider</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../injectables/FindOneUserByFacebookIdProvider.html" target="_self" >FindOneUserByFacebookIdProvider</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                        <td>createGoogleUserProvider</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../injectables/CreateGoogleUserProvider.html" target="_self" >CreateGoogleUserProvider</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                        <td>createFacebookUserProvider</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../injectables/CreateFacebookUserProvider.html" target="_self" >CreateFacebookUserProvider</a></code>
                                                         </td>
                                                   
                                                     <td>
@@ -254,8 +370,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="30"
-                                    class="link-to-prism">src/users/providers/users.service.ts:30</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="131"
+                                    class="link-to-prism">src/users/providers/users.service.ts:131</a></div>
                         </td>
                     </tr>
 
@@ -291,7 +407,147 @@
                                 </table>
                             </div>
                         <div class="io-description">
+                            <b>Returns : </b>        <code><a href="../entitys/User.html" target="_self" >Promise&lt;User&gt;</a></code>
+
+                        </div>
+                            <div class="io-description">
+                                
+                            </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="createFacebookUser"></a>
+                    <span class="name">
+                            <span class="modifier">Public</span>
+                            <span class="modifier">Async</span>
+                        <span ><b>createFacebookUser</b></span>
+                        <a href="#createFacebookUser"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>createFacebookUser(facebookUser: <a href="../classes/FacebookUser.html" target="_self">FacebookUser</a>)</code>
+                </td>
+            </tr>
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="257"
+                                    class="link-to-prism">src/users/providers/users.service.ts:257</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                            <div class="io-description">
+                                <b>Parameters :</b>
+                                
+                                <table class="params">
+                                    <thead>
+                                        <tr>
+                                            <td>Name</td>
+                                                <td>Type</td>
+                                            <td>Optional</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                                <td>facebookUser</td>
+                                            <td>
+                                                            <code><a href="../classes/FacebookUser.html" target="_self" >FacebookUser</a></code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <div class="io-description">
                             <b>Returns : </b>    <code>unknown</code>
+
+                        </div>
+                            <div class="io-description">
+                                
+                            </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="createGoogleUser"></a>
+                    <span class="name">
+                            <span class="modifier">Public</span>
+                            <span class="modifier">Async</span>
+                        <span ><b>createGoogleUser</b></span>
+                        <a href="#createGoogleUser"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>createGoogleUser(googleUser: <a href="../classes/GoogleUser.html" target="_self">GoogleUser</a>)</code>
+                </td>
+            </tr>
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="251"
+                                    class="link-to-prism">src/users/providers/users.service.ts:251</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                            <div class="io-description">
+                                <b>Parameters :</b>
+                                
+                                <table class="params">
+                                    <thead>
+                                        <tr>
+                                            <td>Name</td>
+                                                <td>Type</td>
+                                            <td>Optional</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                                <td>googleUser</td>
+                                            <td>
+                                                            <code><a href="../classes/GoogleUser.html" target="_self" >GoogleUser</a></code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <div class="io-description">
+                            <b>Returns : </b>        <code><a href="../entitys/User.html" target="_self" >Promise&lt;User | null&gt;</a></code>
 
                         </div>
                             <div class="io-description">
@@ -324,8 +580,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="49"
-                                    class="link-to-prism">src/users/providers/users.service.ts:49</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="205"
+                                    class="link-to-prism">src/users/providers/users.service.ts:205</a></div>
                         </td>
                     </tr>
 
@@ -361,7 +617,7 @@
                                 </table>
                             </div>
                         <div class="io-description">
-                            <b>Returns : </b>    <code>unknown</code>
+                            <b>Returns : </b>    <code>Promise&lt;literal type&gt;</code>
 
                         </div>
                             <div class="io-description">
@@ -394,8 +650,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="19"
-                                    class="link-to-prism">src/users/providers/users.service.ts:19</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="72"
+                                    class="link-to-prism">src/users/providers/users.service.ts:72</a></div>
                         </td>
                     </tr>
 
@@ -464,8 +720,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="25"
-                                    class="link-to-prism">src/users/providers/users.service.ts:25</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="104"
+                                    class="link-to-prism">src/users/providers/users.service.ts:104</a></div>
                         </td>
                     </tr>
 
@@ -501,7 +757,217 @@
                                 </table>
                             </div>
                         <div class="io-description">
+                            <b>Returns : </b>        <code><a href="../entitys/User.html" target="_self" >Promise&lt;User&gt;</a></code>
+
+                        </div>
+                            <div class="io-description">
+                                
+                            </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="findOneUserByEmail"></a>
+                    <span class="name">
+                            <span class="modifier">Public</span>
+                            <span class="modifier">Async</span>
+                        <span ><b>findOneUserByEmail</b></span>
+                        <a href="#findOneUserByEmail"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>findOneUserByEmail(email: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>)</code>
+                </td>
+            </tr>
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="234"
+                                    class="link-to-prism">src/users/providers/users.service.ts:234</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                            <div class="io-description">
+                                <b>Parameters :</b>
+                                
+                                <table class="params">
+                                    <thead>
+                                        <tr>
+                                            <td>Name</td>
+                                                <td>Type</td>
+                                            <td>Optional</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                                <td>email</td>
+                                            <td>
+                                                            <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <div class="io-description">
+                            <b>Returns : </b>        <code><a href="../entitys/User.html" target="_self" >Promise&lt;User&gt;</a></code>
+
+                        </div>
+                            <div class="io-description">
+                                
+                            </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="findOneUserByFacebookId"></a>
+                    <span class="name">
+                            <span class="modifier">Public</span>
+                            <span class="modifier">Async</span>
+                        <span ><b>findOneUserByFacebookId</b></span>
+                        <a href="#findOneUserByFacebookId"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>findOneUserByFacebookId(facebookId: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>)</code>
+                </td>
+            </tr>
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="246"
+                                    class="link-to-prism">src/users/providers/users.service.ts:246</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                            <div class="io-description">
+                                <b>Parameters :</b>
+                                
+                                <table class="params">
+                                    <thead>
+                                        <tr>
+                                            <td>Name</td>
+                                                <td>Type</td>
+                                            <td>Optional</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                                <td>facebookId</td>
+                                            <td>
+                                                            <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <div class="io-description">
                             <b>Returns : </b>    <code>unknown</code>
+
+                        </div>
+                            <div class="io-description">
+                                
+                            </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="findOneUserByGoogleId"></a>
+                    <span class="name">
+                            <span class="modifier">Public</span>
+                            <span class="modifier">Async</span>
+                        <span ><b>findOneUserByGoogleId</b></span>
+                        <a href="#findOneUserByGoogleId"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>findOneUserByGoogleId(googleId: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>)</code>
+                </td>
+            </tr>
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="240"
+                                    class="link-to-prism">src/users/providers/users.service.ts:240</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                            <div class="io-description">
+                                <b>Parameters :</b>
+                                
+                                <table class="params">
+                                    <thead>
+                                        <tr>
+                                            <td>Name</td>
+                                                <td>Type</td>
+                                            <td>Optional</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                                <td>googleId</td>
+                                            <td>
+                                                            <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <div class="io-description">
+                            <b>Returns : </b>        <code><a href="../entitys/User.html" target="_self" >Promise&lt;User | null&gt;</a></code>
 
                         </div>
                             <div class="io-description">
@@ -527,15 +993,15 @@
             <tr>
                 <td class="col-md-4">
                         <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>patchUser(getOneUserParamDto: <a href="../classes/GetOneUserParamDto.html" target="_self">GetOneUserParamDto</a>, patchUserDto: <a href="../classes/PatchUserDto.html" target="_self">PatchUserDto</a>)</code>
+                    <code>patchUser(id: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, patchUserDto: <a href="../classes/PatchUserDto.html" target="_self">PatchUserDto</a>)</code>
                 </td>
             </tr>
 
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="36"
-                                    class="link-to-prism">src/users/providers/users.service.ts:36</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="136"
+                                    class="link-to-prism">src/users/providers/users.service.ts:136</a></div>
                         </td>
                     </tr>
 
@@ -556,9 +1022,9 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                                <td>getOneUserParamDto</td>
+                                                <td>id</td>
                                             <td>
-                                                            <code><a href="../classes/GetOneUserParamDto.html" target="_self" >GetOneUserParamDto</a></code>
+                                                            <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
                                             </td>
 
                                             <td>
@@ -583,7 +1049,7 @@
                                 </table>
                             </div>
                         <div class="io-description">
-                            <b>Returns : </b>    <code>unknown</code>
+                            <b>Returns : </b>    <code>Promise&lt;literal type&gt;</code>
 
                         </div>
                             <div class="io-description">
@@ -609,15 +1075,15 @@
             <tr>
                 <td class="col-md-4">
                         <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>patchUserPreferences(patchUserPreferencesDto: <a href="../classes/PatchUserPreferencesDTo.html" target="_self">PatchUserPreferencesDTo</a>)</code>
+                    <code>patchUserPreferences(id: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, patchUserPreferencesDto: <a href="../classes/PatchUserPreferencesDTo.html" target="_self">PatchUserPreferencesDTo</a>)</code>
                 </td>
             </tr>
 
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="42"
-                                    class="link-to-prism">src/users/providers/users.service.ts:42</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="168"
+                                    class="link-to-prism">src/users/providers/users.service.ts:168</a></div>
                         </td>
                     </tr>
 
@@ -638,6 +1104,18 @@
                                     </thead>
                                     <tbody>
                                         <tr>
+                                                <td>id</td>
+                                            <td>
+                                                            <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
+                                        <tr>
                                                 <td>patchUserPreferencesDto</td>
                                             <td>
                                                             <code><a href="../classes/PatchUserPreferencesDTo.html" target="_self" >PatchUserPreferencesDTo</a></code>
@@ -653,7 +1131,7 @@
                                 </table>
                             </div>
                         <div class="io-description">
-                            <b>Returns : </b>    <code>unknown</code>
+                            <b>Returns : </b>    <code>Promise&lt;literal type&gt;</code>
 
                         </div>
                             <div class="io-description">
@@ -669,14 +1147,28 @@
 
 
     <div class="tab-pane fade  tab-source-code" id="source">
-        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { forwardRef, Inject, Injectable } from &#x27;@nestjs/common&#x27;;
+        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { ConflictException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from &#x27;@nestjs/common&#x27;;
 import { GetAllUsersParamDto } from &#x27;../dtos/get-users.dto&#x27;;
 import { GetOneUserParamDto } from &#x27;../dtos/get-one-user.dto&#x27;;
 import { CreateUserDto } from &#x27;../dtos/create-user.dto&#x27;;
 import { PatchUserDto } from &#x27;../dtos/patch-user.dto&#x27;;
 import { AuthService } from &#x27;src/auth/providers/auth.service&#x27;;
 import { PatchUserPreferencesDTo } from &#x27;../dtos/patch-user-preferences.dto&#x27;;
+import { Repository } from &#x27;typeorm&#x27;;
+import { User } from &#x27;../user.entity&#x27;;
+import { InjectRepository } from &#x27;@nestjs/typeorm&#x27;;
+import { CreateUserProvider } from &#x27;./create-user.provider&#x27;;
+import { FindOneUserByEmailProvider } from &#x27;./find-one-user-by-email.provider&#x27;;
+import { FindOneUserByGoogleIdProvider } from &#x27;./find-one-user-by-google-id.provider&#x27;;
+import { CreateGoogleUserProvider } from &#x27;./create-google-user.provider&#x27;;
+import { GoogleUser } from &#x27;../interfaces/google-user.interface&#x27;;
+import { FindOneUserByFacebookIdProvider } from &#x27;./find-one-user-by-facebook-id.provider&#x27;;
+import { CreateFacebookUserProvider } from &#x27;./create-facebook-user.provider&#x27;;
+import { FacebookUser } from &#x27;../interfaces/facebook-user.interface&#x27;;
 
+/**
+ * Service class for &#x27;/users&#x27; controller
+ */
 @Injectable()
 export class UsersService {
     constructor(
@@ -684,41 +1176,236 @@ export class UsersService {
          * Injecting Auth Service 
          */
         @Inject(forwardRef(() &#x3D;&gt; AuthService))
-        private readonly authService: AuthService
+        private readonly authService: AuthService,
+
+        /**
+         * Injecting usersRepository
+         */
+        @InjectRepository(User)
+        private readonly usersRepository: Repository&lt;User&gt;,
+
+        /**
+         * Injecting createUserProvider
+         */
+        private readonly createUserProvider: CreateUserProvider,
+
+        /**
+         * Injecting findOneUserByEmail
+         */
+        private readonly findOneUserByEmailProvider: FindOneUserByEmailProvider,
+
+        /**
+         * Injecting findOneUserByGoogleIdProvider
+         */
+        private readonly findOneUserByGoogleIdProvider: FindOneUserByGoogleIdProvider,
+        /**
+         * Injecting createGoogleUserProvider
+         */
+
+        /**
+         * Injecting findOneUserByFacebookIdProvider
+         */
+        private readonly findOneUserByFacebookIdProvider: FindOneUserByFacebookIdProvider,
+
+        /**
+        * Injecting createGoogleUserProvider
+        */
+        private readonly createGoogleUserProvider: CreateGoogleUserProvider,
+
+        /**
+         * Injecting createFacebookUserProvider
+         */
+        private readonly createFacebookUserProvider: CreateFacebookUserProvider
     ) { }
 
     public async findAllUsers(getAllUsersParamDto: GetAllUsersParamDto) {
-        this.authService.isAuth()
-        const { offset, limit } &#x3D; getAllUsersParamDto
-        return { offset, limit }
+
+        try {
+            const { page &#x3D; 1, limit &#x3D; 10 } &#x3D; getAllUsersParamDto
+
+            const [users, total] &#x3D; await this.usersRepository.findAndCount({
+                skip: (page - 1) * limit,
+                take: limit,
+                order: { createdAt: &#x27;DESC&#x27; }
+            });
+
+            if (users.length &#x3D;&#x3D;&#x3D; 0) {
+                return {};
+            }
+
+            return {
+                total,
+                page,
+                limit,
+                data: users,
+            };
+
+        } catch (error) {
+
+            // Todo:Use NestJS logger 
+            console.error(&#x27;Failed to fetch users:&#x27;, error);
+
+            throw new InternalServerErrorException(&#x27;Failed to fetch users.&#x27;);
+        }
+
     }
 
-    public async findOneUser(getOneUserParamDto: GetOneUserParamDto) {
+    public async findOneUser(getOneUserParamDto: GetOneUserParamDto): Promise&lt;User&gt; {
         const { id } &#x3D; getOneUserParamDto
-        return { message: &#x60;user with ID ${id}&#x60; }
-    }
 
-    public async ceateUser(createUserDto: CreateUserDto) {
-        return {
-            body: createUserDto
+        try {
+            const user &#x3D; await this.usersRepository.findOne({
+                where: { id },
+                relations: [&#x27;channels&#x27;],
+            });
+
+            if (!user) {
+                throw new NotFoundException(&#x27;user not found&#x27;)
+            }
+
+            return user
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error
+            }
+
+            // Todo:Use NestJS logger 
+            console.error(&#x27;Error finding user:&#x27;, error);
+
+            throw new InternalServerErrorException(&#x27;Failed to find user.&#x27;);
+
         }
     }
 
-    public async patchUser(getOneUserParamDto: GetOneUserParamDto, patchUserDto: PatchUserDto) {
-        return {
-            message: &#x60;User ${getOneUserParamDto.id} updated successfully&#x60;,
-            updates: patchUserDto,
-        }
+    public async ceateUser(createUserDto: CreateUserDto): Promise&lt;User&gt; {
+
+        return this.createUserProvider.ceateUser(createUserDto)
     }
-    public async patchUserPreferences(patchUserPreferencesDto: PatchUserPreferencesDTo) {
-        return {
-            message: &#x27;User preferences updated successfully&#x27;,
-            updates: patchUserPreferencesDto,
+
+    public async patchUser(id: string, patchUserDto: PatchUserDto)
+        : Promise&lt;{ message: string, user: User }&gt; {
+
+        try {
+            const user &#x3D; await this.usersRepository.findOne({ where: { id } })
+
+            if (!user) {
+                throw new NotFoundException(&#x60;user with ${id} not found&#x60;)
+            }
+
+            Object.assign(user, patchUserDto)
+            const updatedUser &#x3D; await this.usersRepository.save(user);
+
+            return {
+                message: &#x60;user updated successfully&#x60;,
+                user: updatedUser,
+            };
+
+        } catch (error) {
+
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            // Todo:Use NestJS logger 
+            console.error(&#x27;Failed to update user:&#x27;, error);
+
+            throw new InternalServerErrorException(&#x27;Failed to update user.&#x27;);
+
         }
     }
 
-    public async deleteUser(getOneUserParamDto: GetOneUserParamDto) {
-        return &#x60;user with ${getOneUserParamDto.id} deleted&#x60;
+    public async patchUserPreferences(
+        id: string,
+        patchUserPreferencesDto: PatchUserPreferencesDTo
+    ): Promise&lt;{ message: string, preferences: PatchUserPreferencesDTo }&gt; {
+
+        try {
+            const user &#x3D; await this.usersRepository.findOne({ where: { id } });
+
+            if (!user) {
+                throw new NotFoundException(&#x60;User with ID ${id} was not found.&#x60;);
+            }
+
+            user.preferences &#x3D; {
+                ...user.preferences,
+                ...patchUserPreferencesDto,
+            };
+
+            const updatedUser &#x3D; await this.usersRepository.save(user);
+
+            return {
+                message: &#x27;User preferences updated successfully.&#x27;,
+                preferences: updatedUser.preferences as PatchUserPreferencesDTo
+            };
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            // Todo:Use NestJS logger 
+            console.error(&#x27;Failed to update user preferences:&#x27;, error);
+
+            throw new InternalServerErrorException(
+                &#x27;Failed to update user preferences.&#x27;,
+            );
+        }
+    }
+
+    public async deleteUser(getOneUserParamDto: GetOneUserParamDto): Promise&lt;{ message: string, user: User }&gt; {
+
+        const { id } &#x3D; getOneUserParamDto;
+
+        try {
+            const user &#x3D; await this.usersRepository.findOne({ where: { id } });
+
+            if (!user) {
+                throw new NotFoundException(&#x60;User with ID ${id} was not found.&#x60;);
+            }
+
+            await this.usersRepository.remove(user);
+
+            return {
+                message: &#x60;user deleted successfully.&#x60;,
+                user
+            };
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            // Todo:Use NestJS logger
+            console.error(&#x27;Failed to delete user:&#x27;, error);
+
+            throw new InternalServerErrorException(&#x27;Failed to delete user. Please try again later.&#x27;);
+        }
+    }
+
+    public async findOneUserByEmail(email: string): Promise&lt;User&gt; {
+
+        return this.findOneUserByEmailProvider.findOneByEmail(email)
+
+    }
+
+    public async findOneUserByGoogleId(googleId: string): Promise&lt;User | null&gt; {
+
+        return this.findOneUserByGoogleIdProvider.findOneUserByGoogleId(googleId)
+
+    }
+
+    public async findOneUserByFacebookId(facebookId: string) {
+
+        return this.findOneUserByFacebookIdProvider.findOneByFacebookId(facebookId)
+    }
+
+    public async createGoogleUser(googleUser: GoogleUser): Promise&lt;User | null&gt; {
+
+        return this.createGoogleUserProvider.createGoogleUser(googleUser)
+
+    }
+
+    public async createFacebookUser(facebookUser: FacebookUser) {
+
+        return this.createFacebookUserProvider.createFacebookUser(facebookUser)
     }
 }
 </code></pre>

@@ -13,4 +13,7 @@ export default Joi.object({
     JWT_TOKEN_ISSUER: Joi.string().required(),
     JWT_ACCESS_TOKEN_TTL: Joi.number().required(),
     JWT_REFRESH_TOKEN_TTL: Joi.number().required(),
+    FACEBOOK_APP_ID: Joi.number().required(),
+    FACEBOOK_CLIENT_SECRET: Joi.string().required(),
+    API_VERSION: Joi.string().required(),
 })

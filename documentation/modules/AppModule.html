@@ -273,13 +273,56 @@ import { AppService } from &#x27;./app.service&#x27;;
 import { UsersModule } from &#x27;./users/users.module&#x27;;
 import { SocialAccountsModule } from &#x27;./social-accounts/social-accounts.module&#x27;;
 import { AuthModule } from &#x27;./auth/auth.module&#x27;;
+import { TypeOrmModule } from &#x27;@nestjs/typeorm&#x27;;
+import { ConfigModule, ConfigService } from &#x27;@nestjs/config&#x27;;
+import databaseConfig from &#x27;./config/database.config&#x27;;
+import envValidation from &#x27;./config/env.validation&#x27;;
+import jwtConfig from &#x27;./auth/config/jwt.config&#x27;;
+import { JwtModule } from &#x27;@nestjs/jwt&#x27;;
+import { APP_GUARD, APP_INTERCEPTOR } from &#x27;@nestjs/core&#x27;;
+import { AccessTokenGuard } from &#x27;./auth/guards/access-token/access-token.guard&#x27;;
+import { AuthenticationGuard } from &#x27;./auth/guards/authentication.guard&#x27;;
+import { DataResponseInterceptor } from &#x27;./common/interceptors/data-response.interceptor&#x27;;
 
 @Module({
-  imports: [UsersModule, SocialAccountsModule, AuthModule],
+  imports: [UsersModule, SocialAccountsModule, AuthModule, ConfigModule.forRoot({
+    isGlobal: true,
+    load: [databaseConfig],
+    envFilePath: &#x27;&#x27;,
+    validationSchema: envValidation
+  }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) &#x3D;&gt; ({
+        type: &#x27;postgres&#x27;,
+        host: configService.get(&#x27;database.host&#x27;),
+        port: configService.get(&#x27;database.port&#x27;),
+        username: configService.get(&#x27;database.username&#x27;),
+        password: configService.get(&#x27;database.password&#x27;),
+        database: configService.get(&#x27;database.database&#x27;),
+        synchronize: configService.get(&#x27;database.synchronize&#x27;),
+        autoLoadEntities: configService.get(&#x27;database.autoLoadEntities&#x27;),
+        // logging: true
+      })
+    }),
+    ConfigModule.forFeature(jwtConfig),
+    JwtModule.registerAsync(jwtConfig.asProvider())
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthenticationGuard
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: DataResponseInterceptor
+    },
+    AccessTokenGuard,
+  ],
 })
-export class AppModule {}
+export class AppModule { }
 </code></pre>
     </div>
 </div>

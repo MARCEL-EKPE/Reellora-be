@@ -142,6 +142,8 @@
                         <ul class="index-list">
                             <li>
                                     <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
                                     <span class="modifier">Public</span>
                                 <a href="#createUser" >createUser</a>
                             </li>
@@ -194,6 +196,8 @@
                     <a name="createUser"></a>
                     <span class="name">
                             <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
                             <span class="modifier">Public</span>
                         <span ><b>createUser</b></span>
                         <a href="#createUser"><span class="icon ion-ios-link"></span></a>
@@ -211,14 +215,14 @@
                 <td class="col-md-4">
                     <b>Decorators : </b>
                     <br />
-                    <code>@Post()<br /></code>
+                    <code>@Auth(AuthType.None)<br />@UseInterceptors(ClassSerializerInterceptor)<br />@Post()<br /></code>
                 </td>
             </tr>
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="31"
-                                    class="link-to-prism">src/users/users.controller.ts:31</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="36"
+                                    class="link-to-prism">src/users/users.controller.ts:36</a></div>
                         </td>
                     </tr>
 
@@ -294,8 +298,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="51"
-                                    class="link-to-prism">src/users/users.controller.ts:51</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="57"
+                                    class="link-to-prism">src/users/users.controller.ts:57</a></div>
                         </td>
                     </tr>
 
@@ -371,8 +375,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="21"
-                                    class="link-to-prism">src/users/users.controller.ts:21</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="24"
+                                    class="link-to-prism">src/users/users.controller.ts:24</a></div>
                         </td>
                     </tr>
 
@@ -448,8 +452,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="26"
-                                    class="link-to-prism">src/users/users.controller.ts:26</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="29"
+                                    class="link-to-prism">src/users/users.controller.ts:29</a></div>
                         </td>
                     </tr>
 
@@ -511,7 +515,7 @@
             <tr>
                 <td class="col-md-4">
                         <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>patchUser(getOneUserParamDto: <a href="../classes/GetOneUserParamDto.html" target="_self">GetOneUserParamDto</a>, patchUserDto: <a href="../classes/PatchUserDto.html" target="_self">PatchUserDto</a>)</code>
+                    <code>patchUser(user: <a href="../interfaces/CurrentUser.html" target="_self">CurrentUser</a>, patchUserDto: <a href="../classes/PatchUserDto.html" target="_self">PatchUserDto</a>)</code>
                 </td>
             </tr>
 
@@ -519,14 +523,14 @@
                 <td class="col-md-4">
                     <b>Decorators : </b>
                     <br />
-                    <code>@Patch(&#x27;:id&#x27;)<br /></code>
+                    <code>@Patch(&#x27;me&#x27;)<br /></code>
                 </td>
             </tr>
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="43"
-                                    class="link-to-prism">src/users/users.controller.ts:43</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="49"
+                                    class="link-to-prism">src/users/users.controller.ts:49</a></div>
                         </td>
                     </tr>
 
@@ -547,9 +551,9 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                                <td>getOneUserParamDto</td>
+                                                <td>user</td>
                                             <td>
-                                                            <code><a href="../classes/GetOneUserParamDto.html" target="_self" >GetOneUserParamDto</a></code>
+                                                            <code><a href="../interfaces/CurrentUser.html" target="_self" >CurrentUser</a></code>
                                             </td>
 
                                             <td>
@@ -600,7 +604,7 @@
             <tr>
                 <td class="col-md-4">
                         <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>patchUserPreferences(patchUserPreferencesDto: <a href="../classes/PatchUserPreferencesDTo.html" target="_self">PatchUserPreferencesDTo</a>)</code>
+                    <code>patchUserPreferences(user: <a href="../interfaces/CurrentUser.html" target="_self">CurrentUser</a>, patchUserPreferencesDto: <a href="../classes/PatchUserPreferencesDTo.html" target="_self">PatchUserPreferencesDTo</a>)</code>
                 </td>
             </tr>
 
@@ -614,8 +618,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="36"
-                                    class="link-to-prism">src/users/users.controller.ts:36</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="41"
+                                    class="link-to-prism">src/users/users.controller.ts:41</a></div>
                         </td>
                     </tr>
 
@@ -635,6 +639,18 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        <tr>
+                                                <td>user</td>
+                                            <td>
+                                                            <code><a href="../interfaces/CurrentUser.html" target="_self" >CurrentUser</a></code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
                                         <tr>
                                                 <td>patchUserPreferencesDto</td>
                                             <td>
@@ -665,17 +681,20 @@
 
 
     <div class="tab-pane fade  tab-source-code" id="source">
-        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Body, Controller, Delete, Get, Param, Patch, Post, Query, } from &#x27;@nestjs/common&#x27;;
+        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Body, ClassSerializerInterceptor, Controller, Delete, Get, Param, Patch, Post, Query, UseInterceptors } from &#x27;@nestjs/common&#x27;;
 import { CreateUserDto } from &#x27;./dtos/create-user.dto&#x27;;
 import { GetAllUsersParamDto } from &#x27;./dtos/get-users.dto&#x27;;
 import { GetOneUserParamDto } from &#x27;./dtos/get-one-user.dto&#x27;;
 import { PatchUserDto } from &#x27;./dtos/patch-user.dto&#x27;;
 import { UsersService } from &#x27;./providers/users.service&#x27;;
 import { PatchUserPreferencesDTo } from &#x27;./dtos/patch-user-preferences.dto&#x27;;
+import { CurrentUserData } from &#x27;src/auth/decorators/current-user-data.decorator&#x27;;
+import { type CurrentUser } from &#x27;src/auth/interfaces/current-user.interface&#x27;;
+import { Auth } from &#x27;src/auth/decorators/auth.decorator&#x27;;
+import { AuthType } from &#x27;src/auth/enums/auth-type.enum&#x27;;
 
 @Controller(&#x27;users&#x27;)
 export class UsersController {
-
     constructor(
         /**
          * injecting usersService as a dependency
@@ -694,6 +713,8 @@ export class UsersController {
         return this.usersService.findOneUser(getOneUserParamDto)
     }
 
+    @Auth(AuthType.None)
+    @UseInterceptors(ClassSerializerInterceptor)
     @Post()
     public createUser(@Body() createUserDto: CreateUserDto) {
         return this.usersService.ceateUser(createUserDto)
@@ -701,17 +722,18 @@ export class UsersController {
 
     @Patch(&#x27;preferences&#x27;)
     public patchUserPreferences(
+        @CurrentUserData() user: CurrentUser,
         @Body() patchUserPreferencesDto: PatchUserPreferencesDTo
     ) {
-        return this.usersService.patchUserPreferences(patchUserPreferencesDto)
+        return this.usersService.patchUserPreferences(user.sub, patchUserPreferencesDto)
     }
 
-    @Patch(&#x27;:id&#x27;)
+    @Patch(&#x27;me&#x27;)
     public patchUser(
-        @Param() getOneUserParamDto: GetOneUserParamDto,
+        @CurrentUserData() user: CurrentUser,
         @Body() patchUserDto: PatchUserDto
     ) {
-        return this.usersService.patchUser(getOneUserParamDto, patchUserDto)
+        return this.usersService.patchUser(user.sub, patchUserDto)
     }
 
     @Delete(&#x27;:id&#x27;)

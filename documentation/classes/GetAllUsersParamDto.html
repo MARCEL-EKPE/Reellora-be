@@ -144,7 +144,6 @@
                                     <span class="modifier"></span>
                                     <span class="modifier"></span>
                                     <span class="modifier"></span>
-                                    <span class="modifier"></span>
                                     <span class="modifier">Optional</span>
                                 <a href="#limit" >limit</a>
                             </li>
@@ -153,9 +152,8 @@
                                     <span class="modifier"></span>
                                     <span class="modifier"></span>
                                     <span class="modifier"></span>
-                                    <span class="modifier"></span>
                                     <span class="modifier">Optional</span>
-                                <a href="#offset" >offset</a>
+                                <a href="#page" >page</a>
                             </li>
                         </ul>
                     </td>
@@ -186,7 +184,6 @@
                             <span class="modifier"></span>
                             <span class="modifier"></span>
                             <span class="modifier"></span>
-                            <span class="modifier"></span>
                             <span class="modifier">Optional</span>
                         <span ><b>limit</b></span>
                         <a href="#limit"><span class="icon ion-ios-link"></span></a>
@@ -201,7 +198,7 @@
                 </tr>
                 <tr>
                     <td class="col-md-4">
-                        <i>Default value : </i><code>20</code>
+                        <i>Default value : </i><code>10</code>
                     </td>
                 </tr>
                 <tr>
@@ -209,13 +206,13 @@
                         <b>Decorators : </b>
                         <br />
                         <code>
-                            @ApiPropertyOptional()<br />@IsOptional()<br />@Type(undefined)<br />@IsInt()<br />@Min(1)<br />
+                            @ApiPropertyOptional({description: &#x27;Items per page (default: 10)&#x27;})<br />@IsOptional()<br />@IsInt()<br />@Min(1)<br />
                         </code>
                     </td>
                 </tr>
                     <tr>
                         <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="18" class="link-to-prism">src/users/dtos/get-users.dto.ts:18</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="15" class="link-to-prism">src/users/dtos/get-users.dto.ts:15</a></div>
                         </td>
                     </tr>
 
@@ -226,16 +223,15 @@
         <tbody>
             <tr>
                 <td class="col-md-4">
-                    <a name="offset"></a>
+                    <a name="page"></a>
                     <span class="name">
                             <span class="modifier"></span>
                             <span class="modifier"></span>
                             <span class="modifier"></span>
                             <span class="modifier"></span>
-                            <span class="modifier"></span>
                             <span class="modifier">Optional</span>
-                        <span ><b>offset</b></span>
-                        <a href="#offset"><span class="icon ion-ios-link"></span></a>
+                        <span ><b>page</b></span>
+                        <a href="#page"><span class="icon ion-ios-link"></span></a>
                     </span>
                 </td>
             </tr>
@@ -255,13 +251,13 @@
                         <b>Decorators : </b>
                         <br />
                         <code>
-                            @ApiPropertyOptional()<br />@IsOptional()<br />@Type(undefined)<br />@IsInt()<br />@Min(1)<br />
+                            @ApiPropertyOptional({description: &#x27;Page number (default: 1)&#x27;})<br />@IsOptional()<br />@IsInt()<br />@Min(1)<br />
                         </code>
                     </td>
                 </tr>
                     <tr>
                         <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="11" class="link-to-prism">src/users/dtos/get-users.dto.ts:11</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="9" class="link-to-prism">src/users/dtos/get-users.dto.ts:9</a></div>
                         </td>
                     </tr>
 
@@ -281,23 +277,20 @@
 
     <div class="tab-pane fade  tab-source-code" id="source">
         <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { ApiPropertyOptional } from &quot;@nestjs/swagger&quot;;
-import { Type } from &quot;class-transformer&quot;;
 import { IsInt, IsOptional, Min, } from &quot;class-validator&quot;;
 
 export class GetAllUsersParamDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({ description: &#x27;Page number (default: 1)&#x27; })
     @IsOptional()
-    @Type(() &#x3D;&gt; Number)
     @IsInt()
     @Min(1)
-    offset?: number &#x3D; 1
+    page?: number &#x3D; 1
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({ description: &#x27;Items per page (default: 10)&#x27; })
     @IsOptional()
-    @Type(() &#x3D;&gt; Number)
     @IsInt()
     @Min(1)
-    limit?: number &#x3D; 20;
+    limit?: number &#x3D; 10;
 }</code></pre>
     </div>
 </div>

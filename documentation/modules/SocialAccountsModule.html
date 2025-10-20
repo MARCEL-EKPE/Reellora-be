@@ -115,29 +115,45 @@
 <text text-anchor="start" x="429.73" y="-15.4" font-family="Times-12" font-size="14.00"> &#160;Exports</text>
 <g id="clust1" class="cluster">
 <title>cluster_SocialAccountsModule</title>
-<polygon fill="none" stroke="black" stroke-dasharray="1,5" points="131,-70 131,-195 365,-195 365,-70 131,-70"/>
+<polygon fill="none" stroke="black" stroke-dasharray="1,5" points="73,-70 73,-195 423,-195 423,-70 73,-70"/>
+</g>
+<g id="clust3" class="cluster">
+<title>cluster_SocialAccountsModule_imports</title>
+<polygon fill="none" stroke="black" points="307,-78 307,-130 415,-130 415,-78 307,-78"/>
 </g>
 <g id="clust6" class="cluster">
 <title>cluster_SocialAccountsModule_providers</title>
-<polygon fill="none" stroke="black" points="139,-78 139,-130 357,-130 357,-78 139,-78"/>
+<polygon fill="none" stroke="black" points="81,-78 81,-130 299,-130 299,-78 81,-78"/>
 </g>
-<!-- SocialAccountsService -->
+<!-- UsersModule -->
 <g id="node1" class="node">
-<title>SocialAccountsService</title>
-<ellipse fill="#fdb462" stroke="black" cx="248" cy="-104" rx="100.7" ry="18"/>
-<text text-anchor="middle" x="248" y="-99.8" font-family="Times,serif" font-size="14.00">SocialAccountsService</text>
+<title>UsersModule</title>
+<polygon fill="#8dd3c7" stroke="black" points="406.92,-122 403.92,-126 382.92,-126 379.92,-122 315.08,-122 315.08,-86 406.92,-86 406.92,-122"/>
+<text text-anchor="middle" x="361" y="-99.8" font-family="Times,serif" font-size="14.00">UsersModule</text>
 </g>
 <!-- SocialAccountsModule -->
 <g id="node2" class="node">
 <title>SocialAccountsModule</title>
-<polygon fill="#8dd3c7" stroke="black" points="321.91,-187 318.91,-191 297.91,-191 294.91,-187 174.09,-187 174.09,-151 321.91,-151 321.91,-187"/>
-<text text-anchor="middle" x="248" y="-164.8" font-family="Times,serif" font-size="14.00">SocialAccountsModule</text>
+<polygon fill="#8dd3c7" stroke="black" points="338.91,-187 335.91,-191 314.91,-191 311.91,-187 191.09,-187 191.09,-151 338.91,-151 338.91,-187"/>
+<text text-anchor="middle" x="265" y="-164.8" font-family="Times,serif" font-size="14.00">SocialAccountsModule</text>
+</g>
+<!-- UsersModule&#45;&gt;SocialAccountsModule -->
+<g id="edge1" class="edge">
+<title>UsersModule&#45;&gt;SocialAccountsModule</title>
+<path fill="none" stroke="black" d="M327,-122.11C327,-122.11 327,-140.99 327,-140.99"/>
+<polygon fill="black" stroke="black" points="323.5,-140.99 327,-150.99 330.5,-140.99 323.5,-140.99"/>
+</g>
+<!-- SocialAccountsService -->
+<g id="node3" class="node">
+<title>SocialAccountsService</title>
+<ellipse fill="#fdb462" stroke="black" cx="190" cy="-104" rx="100.7" ry="18"/>
+<text text-anchor="middle" x="190" y="-99.8" font-family="Times,serif" font-size="14.00">SocialAccountsService</text>
 </g>
 <!-- SocialAccountsService&#45;&gt;SocialAccountsModule -->
-<g id="edge1" class="edge">
+<g id="edge2" class="edge">
 <title>SocialAccountsService&#45;&gt;SocialAccountsModule</title>
-<path fill="none" stroke="black" d="M248,-122.11C248,-122.11 248,-140.99 248,-140.99"/>
-<polygon fill="black" stroke="black" points="244.5,-140.99 248,-150.99 251.5,-140.99 244.5,-140.99"/>
+<path fill="none" stroke="black" d="M240.95,-119.73C240.95,-119.73 240.95,-140.65 240.95,-140.65"/>
+<polygon fill="black" stroke="black" points="237.45,-140.65 240.95,-150.65 244.45,-140.65 237.45,-140.65"/>
 </g>
 </g>
 </svg>
@@ -203,6 +219,16 @@
                         </li>
                     </ul>
                 </div>
+                <div class="col-sm-3">
+                    <h3>Imports<a href="https://angular.io/api/core/NgModule#imports" target="_blank" rel="noopener noreferrer"
+                            title="Official documentation about module imports"><span
+                                class="icon ion-ios-information-circle-outline"></a></h3>
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <a href="../modules/UsersModule.html">UsersModule</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -214,12 +240,16 @@
         <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Module } from &#x27;@nestjs/common&#x27;;
 import { SocialAccountsController } from &#x27;./social-accounts.controller&#x27;;
 import { SocialAccountsService } from &#x27;./providers/social-accounts.service&#x27;;
+import { TypeOrmModule } from &#x27;@nestjs/typeorm&#x27;;
+import { SocialAccounts } from &#x27;./social-accounts.entity&#x27;;
+import { UsersModule } from &#x27;src/users/users.module&#x27;;
 
 @Module({
+  imports: [TypeOrmModule.forFeature([SocialAccounts]), UsersModule],
   controllers: [SocialAccountsController],
   providers: [SocialAccountsService]
 })
-export class SocialAccountsModule {}
+export class SocialAccountsModule { }
 </code></pre>
     </div>
 </div>

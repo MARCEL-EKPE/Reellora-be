@@ -187,7 +187,7 @@
                         <b>Decorators : </b>
                         <br />
                         <code>
-                            @ApiProperty({description: &#x27;UUID string identifier&#x27;})<br />@IsUUID()<br />
+                            @ApiProperty({description: &#x27;string identifier&#x27;})<br />@IsUUID()<br />
                         </code>
                     </td>
                 </tr>
@@ -217,7 +217,7 @@ import { IsUUID } from &quot;class-validator&quot;;
 
 export class GetOneUserParamDto {
     @ApiProperty({
-        description: &#x27;UUID string identifier&#x27;
+        description: &#x27;string identifier&#x27;
     })
     @IsUUID()
     id: string;
