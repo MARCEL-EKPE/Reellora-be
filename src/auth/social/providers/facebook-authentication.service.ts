@@ -8,7 +8,6 @@ import { GenerateTokensProvider } from 'src/auth/providers/generate-tokens.provi
 export class FacebookAuthenticationService {
 
     constructor(
-
         /**
          * Injecting usersService 
          */

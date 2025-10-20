@@ -50,7 +50,6 @@ export class User {
     })
     channels: SocialAccounts[];
 
-    @Exclude()
     @ApiProperty()
     @Column({ nullable: true })
     picture?: string

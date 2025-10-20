@@ -204,8 +204,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="16"
-                                    class="link-to-prism">src/social-accounts/social-accounts.controller.ts:16</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="17"
+                                    class="link-to-prism">src/social-accounts/social-accounts.controller.ts:17</a></div>
                         </td>
                     </tr>
 
@@ -357,8 +357,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="34"
-                                    class="link-to-prism">src/social-accounts/social-accounts.controller.ts:34</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="36"
+                                    class="link-to-prism">src/social-accounts/social-accounts.controller.ts:36</a></div>
                         </td>
                     </tr>
 
@@ -523,12 +523,12 @@ export class SocialAccountsController {
         private readonly socialAccountsService: SocialAccountsService
 
     ) { }
+
     @Get(&#x27;my&#x27;)
     getMyAccounts(@Req() req: Request) {
-        /**
-         * get authenticated user id form req.user.id
-         */
-        return this.socialAccountsService.getAccounts(&#x27;authenticatedUserId&#x27;);
+        //TODO: get authenticated user id form req.user.id
+
+        return this.socialAccountsService.getAccounts(&#x27;b229f0df-4a5f-4999-b996-e30141424235&#x27;);
     }
 
     @Post(&#x27;youtube/link&#x27;)
@@ -538,12 +538,16 @@ export class SocialAccountsController {
 
     @Post(&#x27;youtube/save&#x27;)
     async saveYoutubeChannel(@Req() req: Request, @Body() selectChannelDto: SelectChannelDto,) {
-        return this.socialAccountsService.saveYoutubeChannel(&#x27;authenticatedUserId&#x27;, selectChannelDto);
+
+        //TODO: get authenticated user id form req.user.id
+        return this.socialAccountsService.saveYoutubeChannel(&#x27;2a3220a6-307b-42e4-911f-0b9ceb163a49&#x27;, selectChannelDto);
     }
 
     @Delete(&#x27;:id&#x27;)
     removeAccount(@Param(&#x27;id&#x27;) id: string, @Req() req: Request) {
-        return this.socialAccountsService.removeAccount(id, &#x27;authenticatedUserId&#x27;);
+        //TODO: get authenticated user id form req.user.id
+
+        return this.socialAccountsService.removeAccount(id, &#x27;98ef9bd1-bc22-4c48-bb40-2bd9da1f4903&#x27;);
     }
 }
 </code></pre>

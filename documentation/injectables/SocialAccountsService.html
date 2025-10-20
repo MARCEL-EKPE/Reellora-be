@@ -163,6 +163,66 @@
     </table>
 </section>
 
+            <section data-compodoc="block-constructor">
+    <h3 id="constructor">Constructor</h3>
+        <table class="table table-sm table-bordered">
+            <tbody>
+                <tr>
+                    <td class="col-md-4">
+<code>constructor(usersService: <a href="../injectables/UsersService.html" target="_self">UsersService</a>, socialAccountsRepository: <a href="../entitys/SocialAccounts.html" target="_self">Repository&lt;SocialAccounts&gt;</a>)</code>
+                    </td>
+                </tr>
+                        <tr>
+                            <td class="col-md-4">
+                                <div class="io-line">Defined in <a href="" data-line="11" class="link-to-prism">src/social-accounts/providers/social-accounts.service.ts:11</a></div>
+                            </td>
+                        </tr>
+
+                <tr>
+                    <td class="col-md-4">
+                            <div>
+                                    <b>Parameters :</b>
+                                    <table class="params">
+                                        <thead>
+                                            <tr>
+                                                <td>Name</td>
+                                                    <td>Type</td>
+                                                <td>Optional</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                                <tr>
+                                                        <td>usersService</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../injectables/UsersService.html" target="_self" >UsersService</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                        <td>socialAccountsRepository</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../entitys/SocialAccounts.html" target="_self" >Repository&lt;SocialAccounts&gt;</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                        </tbody>
+                                    </table>
+                            </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+</section>
 
             <section data-compodoc="block-methods">
     
@@ -191,8 +251,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="8"
-                                    class="link-to-prism">src/social-accounts/providers/social-accounts.service.ts:8</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="26"
+                                    class="link-to-prism">src/social-accounts/providers/social-accounts.service.ts:26</a></div>
                         </td>
                     </tr>
 
@@ -260,8 +320,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="12"
-                                    class="link-to-prism">src/social-accounts/providers/social-accounts.service.ts:12</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="52"
+                                    class="link-to-prism">src/social-accounts/providers/social-accounts.service.ts:52</a></div>
                         </td>
                     </tr>
 
@@ -322,15 +382,15 @@
             <tr>
                 <td class="col-md-4">
                         <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>removeAccount(id: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, userId: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>)</code>
+                    <code>removeAccount(channelId: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, userId: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>)</code>
                 </td>
             </tr>
 
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="26"
-                                    class="link-to-prism">src/social-accounts/providers/social-accounts.service.ts:26</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="94"
+                                    class="link-to-prism">src/social-accounts/providers/social-accounts.service.ts:94</a></div>
                         </td>
                     </tr>
 
@@ -351,7 +411,7 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                                <td>id</td>
+                                                <td>channelId</td>
                                             <td>
                                                             <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
                                             </td>
@@ -410,8 +470,8 @@
 
                     <tr>
                         <td class="col-md-4">
-                            <div class="io-line">Defined in <a href="" data-line="19"
-                                    class="link-to-prism">src/social-accounts/providers/social-accounts.service.ts:19</a></div>
+                            <div class="io-line">Defined in <a href="" data-line="59"
+                                    class="link-to-prism">src/social-accounts/providers/social-accounts.service.ts:59</a></div>
                         </td>
                     </tr>
 
@@ -475,15 +535,55 @@
 
 
     <div class="tab-pane fade  tab-source-code" id="source">
-        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Injectable } from &#x27;@nestjs/common&#x27;;
+        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Injectable, InternalServerErrorException, NotFoundException } from &#x27;@nestjs/common&#x27;;
 import { LinkYoutubeDto } from &#x27;../dtos/link-youtube.dto&#x27;;
 import { SelectChannelDto } from &#x27;../dtos/select-channel.dto&#x27;;
+import { UsersService } from &#x27;src/users/providers/users.service&#x27;;
+import { GetOneUserParamDto } from &#x27;src/users/dtos/get-one-user.dto&#x27;;
+import { Repository } from &#x27;typeorm&#x27;;
+import { SocialAccounts } from &#x27;../social-accounts.entity&#x27;;
+import { InjectRepository } from &#x27;@nestjs/typeorm&#x27;;
 
 @Injectable()
 export class SocialAccountsService {
 
+    constructor(
+        /**
+         * Injecting usersService
+         */
+        private readonly usersService: UsersService,
+
+        /**
+       * Injecting socialAcconts Repository
+       */
+        @InjectRepository(SocialAccounts)
+        private readonly socialAccountsRepository: Repository&lt;SocialAccounts&gt;
+    ) { }
+
     async getAccounts(userId: string) {
-        return &quot;Get all user&#x27;s social accounts&quot;
+
+        try {
+            const channels &#x3D; await this.socialAccountsRepository.find({
+                where: { user: { id: userId } },
+            })
+
+            if (!channels) {
+                throw new NotFoundException(&#x60;No linked channels found for user ID: ${userId}&#x60;)
+            }
+            return channels
+
+        } catch (error) {
+
+            if (error instanceof NotFoundException) {
+                throw error
+            }
+
+            // Todo:Use NestJS logger 
+            console.error(&#x27;Error finding user:&#x27;, error);
+
+            throw new InternalServerErrorException(&#x27;Failed to find user.&#x27;);
+        }
+
     }
 
     async linkYoutube(linkYoutubeDto: LinkYoutubeDto) {
@@ -494,18 +594,73 @@ export class SocialAccountsService {
     }
 
     async saveYoutubeChannel(userId: string, selectChannelDto: SelectChannelDto) {
-        return {
-            message: &#x27;Service to save channel&#x27;,
-            selectChannelDto
+        try {
+            const id &#x3D; { id: userId } as GetOneUserParamDto;
+            const user &#x3D; await this.usersService.findOneUser(id);
+
+            if (!user) {
+                throw new NotFoundException(&#x60;User not found with ID: ${userId}&#x60;);
+            }
+
+            const newChannel &#x3D; this.socialAccountsRepository.create({
+                ...selectChannelDto,
+                user,
+            });
+
+            const savedChannel &#x3D; await this.socialAccountsRepository.save(newChannel);
+
+            return savedChannel;
+        } catch (error) {
+
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            // Todo:Use NestJS logger 
+            console.error(
+                &#x60;Failed to save YouTube channel for user ${userId}:&#x60;,
+                error
+            );
+
+            throw new InternalServerErrorException(
+                &#x27;Unable to save YouTube channel at this time. Please try again later.&#x27;
+            );
         }
     }
 
-    async removeAccount(id: string, userId: string) {
-        return &#x60;account removed with id ${id}&#x60;;
-    }
+    async removeAccount(channelId: string, userId: string) {
 
-}
-</code></pre>
+        try {
+            const account &#x3D; await this.socialAccountsRepository.findOne({
+                where: { id: channelId, user: { id: userId } },
+            });
+
+            if (!account) {
+                throw new NotFoundException(
+                    &#x60;Channel with ID ${channelId} not found or you are not authorized to delete it.&#x60;
+                );
+            }
+
+            await this.socialAccountsRepository.remove(account);
+
+            return { message: &#x27;Channel removed successfully.&#x27; };
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            // Todo:Use NestJS logger
+            console.error(
+                &#x60;Failed to remove channel ${channelId} for user ${userId}:&#x60;,
+                error
+            );
+
+            throw new InternalServerErrorException(
+                &#x27;Unable to remove channel at this time. Please try again later.&#x27;
+            );
+        }
+    }
+}</code></pre>
     </div>
 
 </div>

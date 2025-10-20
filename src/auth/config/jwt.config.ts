@@ -7,5 +7,7 @@ export default registerAs('jwt', () => ({
     accessTokenTtl: parseInt(process.env.JWT_ACCESS_TOKEN_TTL ?? '3600', 10),
     refershTokenTtl: parseInt(process.env.JWT_REFRESH_TOKEN_TTL ?? '86400', 10),
     googleClientId: process.env.GOOGLE_CLIENT_ID,
-    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    facebookAppId: process.env.FACEBOOK_APP_ID,
+    faceClientSecret: process.env.FACEBOOK_CLIENT_SECRET,
 }))
