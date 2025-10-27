@@ -4,9 +4,9 @@ POST http://localhost:3000/users
 Content-Type: application/json
 
 {
-    "email": "ahmaddialo@yahoo.com",
-    "userName": "Ahmaddialo",
-    "password": "ahmaddialo#113"
+    "email": "marcel@yahoo.com",
+    "userName": "Marcelalexis",
+    "password": "marcelalexis#113"
     // "preferences": {
     //     "frequencyOfUpload": 1,
     //     "autoPost": false,
