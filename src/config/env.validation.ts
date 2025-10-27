@@ -16,4 +16,6 @@ export default Joi.object({
     FACEBOOK_APP_ID: Joi.number().required(),
     FACEBOOK_CLIENT_SECRET: Joi.string().required(),
     API_VERSION: Joi.string().required(),
+    ADMIN_EMAIL: Joi.string().required(),
+    ADMIN_PASSWORD: Joi.string().required()
 })
