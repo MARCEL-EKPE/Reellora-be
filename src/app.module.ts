@@ -11,10 +11,12 @@ import envValidation from './config/env.validation';
 import jwtConfig from './auth/config/jwt.config';
 import { JwtModule } from '@nestjs/jwt';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { AccessTokenGuard } from './auth/guards/access-token/access-token.guard';
+import { AccessTokenGuard } from './auth/guards/access-token.guard';
 import { AuthenticationGuard } from './auth/guards/authentication.guard';
 import { DataResponseInterceptor } from './common/interceptors/data-response.interceptor';
+import { AdminSeedService } from './seeds/admin.seed.service';
 import appConfig from './config/app.config';
+import { User } from './users/user.entity';
 
 @Module({
   imports: [UsersModule, SocialAccountsModule, AuthModule, ConfigModule.forRoot({
@@ -38,6 +40,7 @@ import appConfig from './config/app.config';
         // logging: true
       })
     }),
+    TypeOrmModule.forFeature([User]),
     ConfigModule.forFeature(jwtConfig),
     JwtModule.registerAsync(jwtConfig.asProvider())
   ],
@@ -52,6 +55,7 @@ import appConfig from './config/app.config';
       useClass: DataResponseInterceptor
     },
     AccessTokenGuard,
+    AdminSeedService,
   ],
 })
 export class AppModule { }
