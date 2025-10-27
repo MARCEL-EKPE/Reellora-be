@@ -3,6 +3,7 @@ import { UserPreferencesDto } from "./dtos/user-preferences.dto";
 import { ApiProperty } from "@nestjs/swagger";
 import { Exclude } from "class-transformer";
 import { SocialAccounts } from "src/social-accounts/social-accounts.entity";
+import { UserRole } from "./enums/user-role.enum";
 
 @Entity()
 export class User {
@@ -52,7 +53,15 @@ export class User {
 
     @ApiProperty()
     @Column({ nullable: true })
-    picture?: string
+    picture?: string;
+
+    @ApiProperty({ example: 'user', enum: UserRole })
+    @Column({
+        type: 'enum',
+        enum: UserRole,
+        default: UserRole.USER
+    })
+    role: UserRole
 
     @Exclude()
     @CreateDateColumn()
