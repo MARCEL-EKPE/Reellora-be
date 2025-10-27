@@ -10,8 +10,8 @@ Content-Type: application/json
 // }
 
 {
-    "email": "marcel@yahoo.com",
-    "password": "marcelalexis#113"
+    "email": "admin@example.com",
+    "password": "Admin@123"
   
 }
 

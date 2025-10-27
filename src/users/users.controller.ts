@@ -13,6 +13,8 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from './enums/user-role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 
+
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller('users')
 export class UsersController {
     constructor(
@@ -36,7 +38,6 @@ export class UsersController {
     }
 
     @Auth(AuthType.None)
-    @UseInterceptors(ClassSerializerInterceptor)
     @Post()
     public createUser(@Body() createUserDto: CreateUserDto) {
         return this.usersService.ceateUser(createUserDto)

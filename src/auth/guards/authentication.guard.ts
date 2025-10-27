@@ -1,7 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
-import { AccessTokenGuard } from './access-token/access-token.guard';
+import { AccessTokenGuard } from './access-token.guard';
 import { AuthType } from '../enums/auth-type.enum';
 import { AUTH_TYPE_KEY } from '../constants/auth.constants';
 
@@ -40,7 +39,6 @@ export class AuthenticationGuard implements CanActivate {
       ?? [this.defaultAuthType]
 
     const guards = authTypes.map((type) => this.authTypeGuardMap[type]);
-
     let lastError: unknown
 
     for (const instance of guards) {
