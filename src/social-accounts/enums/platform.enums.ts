@@ -1,5 +1,5 @@
 export enum Platform {
-    YOUTUBE = 'youtube',
+    YOUTUBE = 'youTube',
     FACEBOOK = 'facebook',
     TIKTOK = 'tiktok',
 }

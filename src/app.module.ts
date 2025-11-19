@@ -22,7 +22,6 @@ import { User } from './users/user.entity';
   imports: [UsersModule, SocialAccountsModule, AuthModule, ConfigModule.forRoot({
     isGlobal: true,
     load: [databaseConfig, appConfig],
-    envFilePath: '',
     validationSchema: envValidation
   }),
     TypeOrmModule.forRootAsync({

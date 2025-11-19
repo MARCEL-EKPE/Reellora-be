@@ -1,7 +1,10 @@
-import { Body, Controller, Get, Post, Req, Delete, Param, Request } from '@nestjs/common';
-import { LinkYoutubeDto } from './dtos/link-youtube.dto';
-import { SelectChannelDto } from './dtos/select-channel.dto';
+import { Body, Controller, Get, Post, Delete, Param, Query } from '@nestjs/common';
+import { CreateChannelDto } from './dtos/create-channel.dto';
 import { SocialAccountsService } from './providers/social-accounts.service';
+import { CurrentUserData } from 'src/auth/decorators/current-user-data.decorator';
+import { type CurrentUser } from 'src/auth/interfaces/current-user.interface';
+import { AuthType } from 'src/auth/enums/auth-type.enum';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 @Controller('social-accounts')
 export class SocialAccountsController {
@@ -14,28 +17,30 @@ export class SocialAccountsController {
     ) { }
 
     @Get('my')
-    getMyAccounts(@Req() req: Request) {
-        //TODO: get authenticated user id form req.user.id
-
-        return this.socialAccountsService.getAccounts('b229f0df-4a5f-4999-b996-e30141424235');
+    getMyAccounts(@CurrentUserData() user: CurrentUser,) {
+        return this.socialAccountsService.getYoutubeChannels(user.sub);
     }
 
-    @Post('youtube/link')
-    async linkYoutube(@Body() linkYoutubeDto: LinkYoutubeDto) {
-        return this.socialAccountsService.linkYoutube(linkYoutubeDto);
+    @Get('youtube/link')
+    @Auth(AuthType.None)
+    async linkYoutube() {
+        return this.socialAccountsService.getYoutubeAuthUrl();
+    }
+    @Get('youtube/exchange-code')
+    @Auth(AuthType.None)
+    async getYoutubeChannelDetails(@Query('code') code: string) {
+        return this.socialAccountsService.getYoutubeChannelDetails(code);
     }
 
     @Post('youtube/save')
-    async saveYoutubeChannel(@Req() req: Request, @Body() selectChannelDto: SelectChannelDto,) {
-
-        //TODO: get authenticated user id form req.user.id
-        return this.socialAccountsService.saveYoutubeChannel('2a3220a6-307b-42e4-911f-0b9ceb163a49', selectChannelDto);
+    async saveYoutubeChannel(
+        @CurrentUserData() user: CurrentUser,
+        @Body() createChannelDto: CreateChannelDto,) {
+        return this.socialAccountsService.saveYoutubeChannel(user.sub, createChannelDto);
     }
 
     @Delete(':id')
-    removeAccount(@Param('id') id: string, @Req() req: Request) {
-        //TODO: get authenticated user id form req.user.id
-
-        return this.socialAccountsService.removeAccount(id, '98ef9bd1-bc22-4c48-bb40-2bd9da1f4903');
+    removeAccount(@Param('id') id: string, @CurrentUserData() user: CurrentUser) {
+        return this.socialAccountsService.removeYoutubeChannel(id, user.sub);
     }
 }
