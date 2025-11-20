@@ -1,0 +1,16 @@
+## Post Request for SocialAccounts Controller
+
+POST http://localhost:3000/social-accounts/youtube/save
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZjA2NTcwZi03YTljLTQyYmEtYmU2Yi1kYTc2MzQzNjQ1MDUiLCJlbWFpbCI6ImFsZXhpc21hcmNlbDNAZ21haWwuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NjM1NjUyODMsImV4cCI6MTc2MzU2ODg4MywiYXVkIjoibG9jYWxob3N0OjMwMDAiLCJpc3MiOiJsb2NhbGhvc3Q6MzAwMCJ9.6_VdCl2ES0tyUgfMjywtA06WK2nhp71thn6CXi-jvgg
+
+{
+    "channelId": "string",
+    "channelName": "string",
+    "thumbnail": "string",
+    "accessToken": "string",
+    "refreshToken": "string",
+    "tokenExpiry": "number",
+    "niche": "enum",
+    "platform": "enum",
+}
