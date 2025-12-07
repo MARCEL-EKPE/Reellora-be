@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateChannelDto } from '../dtos/create-channel.dto';
 import { UsersService } from 'src/users/providers/users.service';
 import { Repository } from 'typeorm';

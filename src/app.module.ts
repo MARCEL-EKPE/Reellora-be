@@ -17,9 +17,12 @@ import { DataResponseInterceptor } from './common/interceptors/data-response.int
 import { AdminSeedService } from './seeds/admin.seed.service';
 import appConfig from './config/app.config';
 import { User } from './users/user.entity';
+import { MediaProcessingModule } from './media-processing/media-processing.module';
+import { BullModule } from '@nestjs/bullmq';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [UsersModule, SocialAccountsModule, AuthModule, ConfigModule.forRoot({
+  imports: [UsersModule, SocialAccountsModule, AuthModule, MediaProcessingModule, ConfigModule.forRoot({
     isGlobal: true,
     load: [databaseConfig, appConfig],
     validationSchema: envValidation
@@ -41,7 +44,17 @@ import { User } from './users/user.entity';
     }),
     TypeOrmModule.forFeature([User]),
     ConfigModule.forFeature(jwtConfig),
-    JwtModule.registerAsync(jwtConfig.asProvider())
+    JwtModule.registerAsync(jwtConfig.asProvider()),
+    BullModule.forRoot({
+      connection: {
+        host: 'localhost',
+        port: 6379,
+      },
+      defaultJobOptions: {
+        attempts: 3,
+      }
+    }),
+    ScheduleModule.forRoot()
   ],
   controllers: [AppController],
   providers: [AppService,

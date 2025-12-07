@@ -1,0 +1,65 @@
+
+services:
+  db:
+    image: postgres:16
+    container_name: reellora-be-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    networks:
+      - reellora-be-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+ 
+  redis:
+    image: redis:7
+    container_name: reellora-redis
+    restart: always
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    networks:
+      - reellora-be-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: reellora-be-app
+    environment:
+      PORT: ${PORT}
+      DB_HOST: db
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+    ports:
+      - "${PORT}:${PORT}"
+    depends_on:
+      - db
+    volumes:
+      - ./src:/app/src
+    networks:
+      - reellora-be-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT}/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  reellora-be-net:
+    driver: bridge
