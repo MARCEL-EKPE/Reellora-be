@@ -9,6 +9,6 @@ import { FfmpegProvider } from './providers/ffmpeg.provider';
     name: 'video-processing'
   })],
   providers: [MediaProcessingService, MediaProcessorWorker, FfmpegProvider],
-  exports: [MediaProcessingService]
+  exports: [MediaProcessingService, BullModule.registerQueue({ name: 'video-processing' })]
 })
 export class MediaProcessingModule { }

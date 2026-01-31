@@ -1,7 +1,6 @@
 import { OnWorkerEvent, Processor, WorkerHost } from "@nestjs/bullmq";
 import { Job } from "bullmq";
 import { FfmpegProvider } from "./ffmpeg.provider";
-import * as path from "path"
 
 @Processor('video-processing')
 export class MediaProcessorWorker extends WorkerHost {
@@ -11,28 +10,33 @@ export class MediaProcessorWorker extends WorkerHost {
     ) { super(); }
 
 
-    async process(job: Job): Promise<any> {
+    async process(job: Job) {
+        console.log("WORKER: Job received →", job.name);
 
-        console.log("WORKER: Starting video edit...");
+        switch (job.name) {
+            case "trim-video":
+                return this.ffmpegProvider.trimVideo(
+                    job.data.input,
+                    job.data.output,
+                    job.data.duration
+                );
 
-        const input = path.join(process.cwd(), "videos", "input.mp4");
-        const output = path.join(process.cwd(), "videos", `output-${Date.now()}.mp4`);
+            case 'add-watermark':
+                return this.ffmpegProvider.addWatermark(job.data.input, job.data.output, job.data.logoPath);
 
-        const result = await this.ffmpegProvider.trimVideo(input, output);
-
-        console.log("WORKER: Finished:", result);
-
-        return { output: result };
+            default:
+                throw new Error(`Unknown job type: ${job.name}`);
+        }
     }
 
-    @OnWorkerEvent('completed')
+    @OnWorkerEvent("completed")
     onCompleted(job: Job) {
-        console.log(`Job completed: ${job.id}`);
+        console.log(`✅ Job completed: ${job.id}`);
     }
 
-    @OnWorkerEvent('failed')
+    @OnWorkerEvent("failed")
     onFailed(job: Job, err: Error) {
-        console.log(`Job failed: ${job.id}`, err.message);
+        console.error(`❌ Job failed: ${job.id}`, err.message);
     }
 }
 

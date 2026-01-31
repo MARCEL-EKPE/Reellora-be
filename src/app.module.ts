@@ -20,6 +20,7 @@ import { User } from './users/user.entity';
 import { MediaProcessingModule } from './media-processing/media-processing.module';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AppMcpModule } from './mcp/mcp.module';
 
 @Module({
   imports: [UsersModule, SocialAccountsModule, AuthModule, MediaProcessingModule, ConfigModule.forRoot({
@@ -54,7 +55,8 @@ import { ScheduleModule } from '@nestjs/schedule';
         attempts: 3,
       }
     }),
-    ScheduleModule.forRoot()
+    ScheduleModule.forRoot(),
+    AppMcpModule
   ],
   controllers: [AppController],
   providers: [AppService,
