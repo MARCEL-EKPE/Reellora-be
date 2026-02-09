@@ -75,54 +75,6 @@ export class VideoSourceProvider {
         }
     }
 
-    /**
-     * Search for trending YouTube videos (requires YouTube Data API)
-     */
-    async fetchTrendingVideoUrls(maxResults = 10): Promise<string[]> {
-        const apiKey = process.env.YOUTUBE_API_KEY;
-        if (!apiKey) throw new Error('YOUTUBE_API_KEY is not set');
-
-        try {
-            const res = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
-                params: {
-                    part: 'snippet,contentDetails',
-                    chart: 'mostPopular',
-                    regionCode: 'US',
-                    maxResults,
-                    key: apiKey,
-                },
-            });
-
-            return res.data.items.map((item: any) => `https://www.youtube.com/watch?v=${item.id}`);
-        } catch (err) {
-            throw new Error(`Failed to fetch trending videos: ${err.message}`);
-        }
-    }
-
-    /**
-     * Search for videos by keyword (requires YouTube Data API)
-     */
-    async searchVideosByKeyword(keyword: string, maxResults = 10): Promise<string[]> {
-        const apiKey = process.env.YOUTUBE_API_KEY;
-        if (!apiKey) throw new Error('YOUTUBE_API_KEY is not set');
-
-        try {
-            const res = await axios.get('https://www.googleapis.com/youtube/v3/search', {
-                params: {
-                    part: 'snippet',
-                    q: keyword,
-                    type: 'video',
-                    order: 'relevance',
-                    maxResults,
-                    key: apiKey,
-                },
-            });
-
-            return res.data.items.map((item: any) => `https://www.youtube.com/watch?v=${item.id.videoId}`);
-        } catch (err) {
-            throw new Error(`Failed to search videos: ${err.message}`);
-        }
-    }
 
     private _sanitizeFilename(filename: string): string {
         return filename.replace(/[^a-z0-9_-]/gi, '_').toLowerCase();

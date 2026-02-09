@@ -18,10 +18,7 @@ export class MediaProcessingService implements OnModuleInit {
         private readonly videoUploadProvider: VideoUploadProvider,
     ) { }
 
-    /**
-     * Called once when the module is initialized
-     * This runs the processing pipeline automatically on startup (for testing)
-     */
+
     async onModuleInit() {
         this.logger.log('🔧 MediaProcessingModule initialized - Starting automated processing...');
         // Run the processing after a short delay to ensure everything is ready
@@ -29,7 +26,7 @@ export class MediaProcessingService implements OnModuleInit {
             this.automateHighlightGeneration().catch(err => {
                 this.logger.error(`Failed to run initial processing: ${err.message}`);
             });
-        }, 20000); // 20 second delay
+        }, 20000);
     }
 
     /**
@@ -48,7 +45,7 @@ export class MediaProcessingService implements OnModuleInit {
             // await this.processTrendingVideos({ maxResults: 3, uploadToYouTube: true });
 
             // Using test URL for now (bypassing YouTube API)
-            const testVideoUrl = 'https://www.youtube.com/watch?v=8pAqpTNoiPM'; // Test video
+            const testVideoUrl = 'https://www.youtube.com/watch?v=8f8sqKF5k6E'; // Test video
             await this.fullProcessingPipeline(testVideoUrl, { uploadToYouTube: false });
 
             this.logger.log('✅ ===== AUTOMATION CYCLE COMPLETED =====');
@@ -57,83 +54,6 @@ export class MediaProcessingService implements OnModuleInit {
         }
     }
 
-    /**
-     * ===== PUBLIC ORCHESTRATION METHODS =====
-     * Entry points for manual/external triggers
-     */
-
-    async processTrendingVideos(options?: { maxResults?: number; uploadToYouTube?: boolean }): Promise<any[]> {
-        this.logger.log(`📊 Fetching trending videos...`);
-        const urls = await this.videoSourceProvider.fetchTrendingVideoUrls(options?.maxResults || 5);
-        this.logger.log(`📊 Found ${urls.length} trending videos`);
-
-        const results: any[] = [];
-        for (const url of urls) {
-            try {
-                this.logger.log(`\n📌 Processing: ${url}`);
-                const result = await this.fullProcessingPipeline(url, { uploadToYouTube: options?.uploadToYouTube });
-                results.push(result);
-            } catch (err) {
-                this.logger.error(`❌ Failed to process ${url}: ${err.message}`);
-            }
-        }
-
-        this.logger.log(`\n✅ Processed ${results.length} trending videos`);
-        return results;
-    }
-
-    async processVideosByKeyword(keyword: string, options?: { maxResults?: number; uploadToYouTube?: boolean }): Promise<any[]> {
-        this.logger.log(`🔍 Searching videos for keyword: "${keyword}"`);
-        const urls = await this.videoSourceProvider.searchVideosByKeyword(keyword, options?.maxResults || 5);
-        this.logger.log(`🔍 Found ${urls.length} videos for "${keyword}"`);
-
-        const results: any[] = [];
-        for (const url of urls) {
-            try {
-                this.logger.log(`\n📌 Processing: ${url}`);
-                const result = await this.fullProcessingPipeline(url, { uploadToYouTube: options?.uploadToYouTube });
-                results.push(result);
-            } catch (err) {
-                this.logger.error(`❌ Failed to process ${url}: ${err.message}`);
-            }
-        }
-
-        this.logger.log(`\n✅ Processed ${results.length} videos for "${keyword}"`);
-        return results;
-    }
-
-    /**
-     * Process a local video file (bypass download). Useful for demos/tests.
-     */
-    async processLocalFile(filePath: string, options?: { uploadToYouTube?: boolean }): Promise<any> {
-        this.logger.log(`🧪 Processing local file: ${filePath}`);
-        const sourceMeta: SourcedVideoMetadata = {
-            sourceUrl: `file://${filePath}`,
-            title: path.basename(filePath, path.extname(filePath)),
-            channel: 'local-file',
-            duration: 0,
-            downloadPath: filePath,
-        };
-
-        try {
-            const sessionId = Date.now();
-            this.logger.log(`[${sessionId}] 🎬 STEP 2: Processing local video...`);
-            const processResult = await this._processVideo(sourceMeta.downloadPath, sessionId);
-            this.logger.log(`[${sessionId}] ✅ Processing complete: ${path.basename(processResult.finalOutput)}`);
-
-            if (options?.uploadToYouTube && processResult.finalOutput) {
-                this.logger.log(`[${sessionId}] 📤 STEP 3: Uploading highlight video (test save)...`);
-                const uploadResult = await this._uploadVideo(processResult.finalOutput, sourceMeta);
-                this.logger.log(`[${sessionId}] ✅ Uploaded: ${uploadResult.url}`);
-                processResult.uploadedTo = uploadResult;
-            }
-
-            return processResult;
-        } catch (err) {
-            this.logger.error(`❌ processLocalFile failed: ${err.message}`);
-            throw err;
-        }
-    }
 
     /**
      * ===== MAIN ORCHESTRATION PIPELINE =====
@@ -154,14 +74,6 @@ export class MediaProcessingService implements OnModuleInit {
             this.logger.log(`[${sessionId}] 🎬 STEP 2: Processing video (audio extraction → transcription → highlight analysis)...`);
             const processResult = await this._processVideo(sourceMeta.downloadPath, sessionId);
             this.logger.log(`[${sessionId}] ✅ Processing complete: ${path.basename(processResult.finalOutput)}`);
-
-            // Step 3: Upload (optional)
-            if (options?.uploadToYouTube && processResult.finalOutput) {
-                this.logger.log(`[${sessionId}] 📤 STEP 3: Uploading highlight video to YouTube...`);
-                const uploadResult = await this._uploadVideo(processResult.finalOutput, sourceMeta);
-                this.logger.log(`[${sessionId}] ✅ Uploaded: ${uploadResult.url}`);
-                processResult.uploadedTo = uploadResult;
-            }
 
             return processResult;
         } catch (err) {
@@ -255,25 +167,6 @@ export class MediaProcessingService implements OnModuleInit {
         } finally {
             await queueEvents.close();
             await connection.disconnect();
-        }
-    }
-
-    /**
-     * ===== STEP 3: UPLOAD VIDEO =====
-     */
-
-    private async _uploadVideo(filePath: string, sourceMeta: SourcedVideoMetadata): Promise<any> {
-        try {
-            const uploadResult = await this.videoUploadProvider.uploadToYouTube(
-                filePath,
-                `Highlights: ${sourceMeta.title}`,
-                `Short highlights from: ${sourceMeta.sourceUrl}\n\nOriginal: ${sourceMeta.channel}`,
-                [],
-                'unlisted'
-            );
-            return uploadResult;
-        } catch (err) {
-            throw new Error(`Upload failed: ${err.message}`);
         }
     }
 
