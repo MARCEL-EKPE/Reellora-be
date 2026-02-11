@@ -3,6 +3,7 @@ import { Job } from "bullmq";
 import { FfmpegProvider } from "./ffmpeg.provider";
 import { TranscriptionProvider } from "./transcription.provider";
 import { AiProvider } from "./ai.provider";
+import { TextToSpeechProvider } from "./text-to-speech.provider";
 import * as fs from 'fs';
 
 @Processor('video-processing')
@@ -11,7 +12,8 @@ export class MediaProcessorWorker extends WorkerHost {
     constructor(
         private readonly ffmpegProvider: FfmpegProvider,
         private readonly transcriptionProvider: TranscriptionProvider,
-        private readonly aiProvider: AiProvider
+        private readonly aiProvider: AiProvider,
+        private readonly textToSpeechProvider: TextToSpeechProvider
     ) { super() }
 
 
@@ -61,11 +63,17 @@ export class MediaProcessorWorker extends WorkerHost {
                 return highlights;
             }
 
+            case 'generate-tts':
+                return this.textToSpeechProvider.generateSpeech(job.data);
+
             case 'cut-segment':
                 return this.ffmpegProvider.cutVideo(job.data.input, job.data.output, job.data.start, job.data.duration);
 
             case 'merge-videos':
                 return this.ffmpegProvider.mergeVideos(job.data.inputs, job.data.output);
+
+            case 'replace-audio':
+                return this.ffmpegProvider.replaceAudio(job.data.inputVideo, job.data.inputAudio, job.data.output);
 
             default:
                 throw new Error(`Unknown job type: ${job.name}`);

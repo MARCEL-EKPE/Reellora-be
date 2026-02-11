@@ -48,7 +48,14 @@ export class FfmpegProvider {
                             y: 'main_h-overlay_h-20',
                         },
                         inputs: ['base', 'wm'],
+                        outputs: ['v'],
                     },
+                ], 'v')
+                .outputOptions([
+                    '-map [v]',
+                    '-map 0:a?',
+                    '-c:a aac',
+                    '-shortest',
                 ])
                 .output(outputPath)
                 .on('end', () => resolve(outputPath))
@@ -109,6 +116,25 @@ export class FfmpegProvider {
                 .on('end', () => resolve(outputPath))
                 .on('error', reject)
                 .mergeToFile(outputPath, os.tmpdir());
+        });
+    }
+
+    async replaceAudio(inputVideoPath: string, inputAudioPath: string, outputPath: string): Promise<string> {
+        return new Promise((resolve, reject) => {
+            ffmpeg()
+                .input(inputVideoPath)
+                .input(inputAudioPath)
+                .outputOptions([
+                    '-map 0:v:0',
+                    '-map 1:a:0',
+                    '-c:v copy',
+                    '-c:a aac',
+                    '-shortest',
+                ])
+                .output(outputPath)
+                .on('end', () => resolve(outputPath))
+                .on('error', reject)
+                .run();
         });
     }
 

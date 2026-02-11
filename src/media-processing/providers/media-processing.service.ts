@@ -26,6 +26,7 @@ export class MediaProcessingService implements OnModuleInit {
             this.automateHighlightGeneration().catch(err => {
                 this.logger.error(`Failed to run initial processing: ${err.message}`);
             });
+            // this.logger.warn('Automated processing is currently disabled for testing. Please uncomment the call to automateHighlightGeneration() in onModuleInit() to enable it.');
         }, 20000);
     }
 
@@ -45,7 +46,7 @@ export class MediaProcessingService implements OnModuleInit {
             // await this.processTrendingVideos({ maxResults: 3, uploadToYouTube: true });
 
             // Using test URL for now (bypassing YouTube API)
-            const testVideoUrl = 'https://www.youtube.com/watch?v=8f8sqKF5k6E'; // Test video
+            const testVideoUrl = 'https://www.youtube.com/watch?v=Vr0D_GWJvEU'; // Test video
             await this.fullProcessingPipeline(testVideoUrl, { uploadToYouTube: false });
 
             this.logger.log('✅ ===== AUTOMATION CYCLE COMPLETED =====');
@@ -106,9 +107,12 @@ export class MediaProcessingService implements OnModuleInit {
 
         const audioPath = path.join(sessionDir, 'audio.wav');
         const transcriptPath = path.join(sessionDir, 'transcript.json');
+        const transcriptTextPath = path.join(sessionDir, 'transcript.txt');
         const highlightsPath = path.join(sessionDir, 'highlights.json');
         const clipsDir = path.join(sessionDir, 'clips');
         const mergedPath = path.join(sessionDir, 'merged.mp4');
+        const mergedWithTtsPath = path.join(sessionDir, 'merged-tts.mp4');
+        const ttsAudioPath = path.join(sessionDir, 'tts-audio.mp3');
         const finalOutput = path.join(sessionDir, 'final-highlight.mp4');
         const logo = path.join(this.baseDir, 'logo.jpg');
 
@@ -130,6 +134,19 @@ export class MediaProcessingService implements OnModuleInit {
             // 2.2: Transcribe audio
             this.logger.debug(`[${sessionId}] 2.2 Transcribing audio...`);
             await this._executeQueueJob('transcribe-audio', { input: compressedAudioPath, outputPath: transcriptPath, model: 'whisper-1' }, queueEvents, sessionId);
+
+            // 2.2.5: Generate TTS audio from transcript
+            this.logger.debug(`[${sessionId}] 2.2.5 Generating TTS audio...`);
+            const transcriptRaw = fs.readFileSync(transcriptPath, 'utf-8');
+            const transcriptJson = JSON.parse(transcriptRaw);
+            const transcriptText = transcriptJson?.text || '';
+            fs.writeFileSync(transcriptTextPath, transcriptText);
+            await this._executeQueueJob(
+                'generate-tts',
+                { transcriptPath: transcriptTextPath, outputPath: ttsAudioPath, response_format: 'mp3' },
+                queueEvents,
+                sessionId
+            );
 
             // 2.3: Analyze highlights
             this.logger.debug(`[${sessionId}] 2.3 Analyzing highlights...`);
@@ -159,9 +176,13 @@ export class MediaProcessingService implements OnModuleInit {
             this.logger.debug(`[${sessionId}] 2.5 Merging clips...`);
             await this._executeQueueJob('merge-videos', { inputs: clipPaths, output: mergedPath }, queueEvents, sessionId);
 
+            // 2.5.5: Replace merged video audio with TTS
+            this.logger.debug(`[${sessionId}] 2.5.5 Replacing audio with TTS...`);
+            await this._executeQueueJob('replace-audio', { inputVideo: mergedPath, inputAudio: ttsAudioPath, output: mergedWithTtsPath }, queueEvents, sessionId);
+
             // 2.6: Add watermark
             this.logger.debug(`[${sessionId}] 2.6 Adding watermark...`);
-            await this._executeQueueJob('add-watermark', { input: mergedPath, output: finalOutput, logoPath: logo }, queueEvents, sessionId);
+            await this._executeQueueJob('add-watermark', { input: mergedWithTtsPath, output: finalOutput, logoPath: logo }, queueEvents, sessionId);
 
             return { videoPath, audioPath, transcriptPath, highlightsPath, clipsDir, mergedPath, finalOutput, highlights };
         } finally {

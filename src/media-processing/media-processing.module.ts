@@ -9,6 +9,7 @@ import { TranscriptionProvider } from './providers/transcription.provider';
 import { AiProvider } from './providers/ai.provider';
 import { VideoSourceProvider } from './providers/video-source.provider';
 import { VideoUploadProvider } from './providers/video-upload.provider';
+import { TextToSpeechProvider } from './providers/text-to-speech.provider';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { VideoUploadProvider } from './providers/video-upload.provider';
     AiProvider,
     VideoSourceProvider,
     VideoUploadProvider,
+    TextToSpeechProvider,
   ],
-  exports: [MediaProcessingService, BullModule.registerQueue({ name: 'video-processing' })]
+  exports: [MediaProcessingService, TextToSpeechProvider, BullModule.registerQueue({ name: 'video-processing' })]
 })
 export class MediaProcessingModule { }
