@@ -50,7 +50,7 @@ export class FfmpegProvider {
                         inputs: ['base', 'wm'],
                         outputs: ['v'],
                     },
-                ], 'v')
+                ])
                 .outputOptions([
                     '-map [v]',
                     '-map 0:a?',

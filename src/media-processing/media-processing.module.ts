@@ -10,11 +10,13 @@ import { AiProvider } from './providers/ai.provider';
 import { VideoSourceProvider } from './providers/video-source.provider';
 import { VideoUploadProvider } from './providers/video-upload.provider';
 import { TextToSpeechProvider } from './providers/text-to-speech.provider';
+import { MediaScrapperModule } from 'src/media-scrapper/media-scrapper.module';
 
 @Module({
   imports: [
     BullModule.registerQueue({ name: 'video-processing' }),
     ConfigModule.forFeature(mediaProcessingConfig),
+    MediaScrapperModule,
   ],
   providers: [
     MediaProcessingService,

@@ -21,6 +21,7 @@ import { MediaProcessingModule } from './media-processing/media-processing.modul
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppMcpModule } from './mcp/mcp.module';
+import { MediaScrapperModule } from './media-scrapper/media-scrapper.module';
 
 @Module({
   imports: [UsersModule, SocialAccountsModule, AuthModule, MediaProcessingModule, ConfigModule.forRoot({
@@ -56,7 +57,8 @@ import { AppMcpModule } from './mcp/mcp.module';
       }
     }),
     ScheduleModule.forRoot(),
-    AppMcpModule
+    AppMcpModule,
+    MediaScrapperModule
   ],
   controllers: [AppController],
   providers: [AppService,

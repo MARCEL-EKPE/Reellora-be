@@ -7,6 +7,7 @@ import { videoQueue } from '../queues/video.queue';
 import IORedis from 'ioredis';
 import { QueueEvents } from 'bullmq';
 import * as fs from 'fs';
+import { MediaScrapperService } from 'src/media-scrapper/providers/media-scrapper.service';
 
 @Injectable()
 export class MediaProcessingService implements OnModuleInit {
@@ -14,19 +15,25 @@ export class MediaProcessingService implements OnModuleInit {
     private readonly baseDir = path.join(process.cwd(), 'videos');
 
     constructor(
+        private readonly mediaScrapperService: MediaScrapperService,
         private readonly videoSourceProvider: VideoSourceProvider,
         private readonly videoUploadProvider: VideoUploadProvider,
     ) { }
 
 
     async onModuleInit() {
-        this.logger.log('🔧 MediaProcessingModule initialized - Starting automated processing...');
-        // Run the processing after a short delay to ensure everything is ready
+        // this.logger.log('🔧 MediaProcessingModule initialized - Starting automated processing...');
         setTimeout(() => {
-            this.automateHighlightGeneration().catch(err => {
-                this.logger.error(`Failed to run initial processing: ${err.message}`);
+
+            // this.automateHighlightGeneration().catch(err => {
+            //     this.logger.error(`Failed to run initial processing: ${err.message}`);
+            // });
+            this.mediaScrapperService.discoverFeeds().then(feeds => {
+                console.log(feeds);
+            }).catch(err => {
+                console.error(`Failed to discover feeds: ${err.message}`);
             });
-            // this.logger.warn('Automated processing is currently disabled for testing. Please uncomment the call to automateHighlightGeneration() in onModuleInit() to enable it.');
+
         }, 20000);
     }
 
