@@ -25,13 +25,8 @@ export class MediaProcessingService implements OnModuleInit {
         // this.logger.log('🔧 MediaProcessingModule initialized - Starting automated processing...');
         setTimeout(() => {
 
-            // this.automateHighlightGeneration().catch(err => {
-            //     this.logger.error(`Failed to run initial processing: ${err.message}`);
-            // });
-            this.mediaScrapperService.discoverFeeds().then(feeds => {
-                console.log(feeds);
-            }).catch(err => {
-                console.error(`Failed to discover feeds: ${err.message}`);
+            this.automateHighlightGeneration().catch(err => {
+                this.logger.error(`Failed to run initial processing: ${err.message}`);
             });
 
         }, 20000);
@@ -49,12 +44,23 @@ export class MediaProcessingService implements OnModuleInit {
     async automateHighlightGeneration() {
         this.logger.log('🚀 ===== AUTOMATED HIGHLIGHT GENERATION STARTED =====');
         try {
-            // TODO: Uncomment YouTube API usage when YOUTUBE_API_KEY is available
-            // await this.processTrendingVideos({ maxResults: 3, uploadToYouTube: true });
+            const feedUrls = await this.mediaScrapperService.discoverFeeds();
 
-            // Using test URL for now (bypassing YouTube API)
-            const testVideoUrl = 'https://www.youtube.com/watch?v=Vr0D_GWJvEU'; // Test video
-            await this.fullProcessingPipeline(testVideoUrl, { uploadToYouTube: false });
+            if (!feedUrls?.length) {
+                this.logger.warn('⚠️ No feed URLs discovered for this automation cycle.');
+                return;
+            }
+
+            this.logger.log(`📰 Discovered ${feedUrls.length} feed URL(s) to process.`);
+
+            for (const feedUrl of feedUrls) {
+                try {
+                    this.logger.log(`▶️ Starting pipeline for: ${feedUrl}`);
+                    await this.fullProcessingPipeline(feedUrl, { uploadToYouTube: false });
+                } catch (err) {
+                    this.logger.error(`❌ Failed processing feed URL ${feedUrl}: ${err.message}`);
+                }
+            }
 
             this.logger.log('✅ ===== AUTOMATION CYCLE COMPLETED =====');
         } catch (err) {
@@ -142,19 +148,6 @@ export class MediaProcessingService implements OnModuleInit {
             this.logger.debug(`[${sessionId}] 2.2 Transcribing audio...`);
             await this._executeQueueJob('transcribe-audio', { input: compressedAudioPath, outputPath: transcriptPath, model: 'whisper-1' }, queueEvents, sessionId);
 
-            // 2.2.5: Generate TTS audio from transcript
-            this.logger.debug(`[${sessionId}] 2.2.5 Generating TTS audio...`);
-            const transcriptRaw = fs.readFileSync(transcriptPath, 'utf-8');
-            const transcriptJson = JSON.parse(transcriptRaw);
-            const transcriptText = transcriptJson?.text || '';
-            fs.writeFileSync(transcriptTextPath, transcriptText);
-            await this._executeQueueJob(
-                'generate-tts',
-                { transcriptPath: transcriptTextPath, outputPath: ttsAudioPath, response_format: 'mp3' },
-                queueEvents,
-                sessionId
-            );
-
             // 2.3: Analyze highlights
             this.logger.debug(`[${sessionId}] 2.3 Analyzing highlights...`);
             const highlightsResult = await this._executeQueueJob('analyze-highlights', { transcriptPath, outputPath: highlightsPath, maxHighlights: 6 }, queueEvents, sessionId);
@@ -183,12 +176,35 @@ export class MediaProcessingService implements OnModuleInit {
             this.logger.debug(`[${sessionId}] 2.5 Merging clips...`);
             await this._executeQueueJob('merge-videos', { inputs: clipPaths, output: mergedPath }, queueEvents, sessionId);
 
-            // 2.5.5: Replace merged video audio with TTS
-            this.logger.debug(`[${sessionId}] 2.5.5 Replacing audio with TTS...`);
+            // 2.5.5: Generate TTS from highlight transcript segments only
+            this.logger.debug(`[${sessionId}] 2.5.5 Generating TTS audio from highlight segments...`);
+            const transcriptRaw = fs.readFileSync(transcriptPath, 'utf-8');
+            const transcriptJson = JSON.parse(transcriptRaw);
+            const transcriptSegments: Array<{ start: number; end: number; text: string }> = transcriptJson?.segments ?? [];
+            const highlightText = highlights
+                .map((h: any) =>
+                    transcriptSegments
+                        .filter(seg => seg.start < h.end && seg.end > h.start)
+                        .map(seg => seg.text.trim())
+                        .join(' ')
+                )
+                .join(' ')
+                .trim();
+            const ttsText = highlightText || transcriptJson?.text || '';
+            fs.writeFileSync(transcriptTextPath, ttsText);
+            await this._executeQueueJob(
+                'generate-tts',
+                { transcriptPath: transcriptTextPath, outputPath: ttsAudioPath, response_format: 'mp3' },
+                queueEvents,
+                sessionId
+            );
+
+            // 2.6: Replace merged video audio with TTS
+            this.logger.debug(`[${sessionId}] 2.6 Replacing audio with TTS...`);
             await this._executeQueueJob('replace-audio', { inputVideo: mergedPath, inputAudio: ttsAudioPath, output: mergedWithTtsPath }, queueEvents, sessionId);
 
-            // 2.6: Add watermark
-            this.logger.debug(`[${sessionId}] 2.6 Adding watermark...`);
+            // 2.7: Add watermark
+            this.logger.debug(`[${sessionId}] 2.7 Adding watermark...`);
             await this._executeQueueJob('add-watermark', { input: mergedWithTtsPath, output: finalOutput, logoPath: logo }, queueEvents, sessionId);
 
             return { videoPath, audioPath, transcriptPath, highlightsPath, clipsDir, mergedPath, finalOutput, highlights };

@@ -25,43 +25,48 @@ export class FeedDiscoveryProvider {
     private parser = new Parser();
 
     async discoverFeeds() {
-        const urls: String[] = [];
+        const urls: string[] = [];
         for (const feedUrl of videoFeeds) {
 
             try {
                 const result = await this.parser.parseURL(feedUrl);
                 for (const item of result.items) {
+                    try {
+                        const title = item.title || '';
+                        const link = item.link || '';
+                        const videoId = item.id || link;
 
-                    const title = item.title || '';
-                    const link = item.link || '';
-                    const videoId = item.id || link;
+                        //Check if video was already processed(cached)
+                        const cachedVideo = await this.redis.exists(videoId);
+                        if (cachedVideo) {
+                            this.logger.debug(`Skipped (already processed): ${title}`)
+                            continue;
+                        }
 
-                    // Check if video was already processed (cached)
-                    const cachedVideo = await this.redis.exists(videoId);
-                    if (cachedVideo) {
-                        this.logger.debug(`Skipped (already processed): ${title}`)
-                        continue;
-                    }
+                        if (link.includes('/shorts/')) {
+                            this.logger.debug(`Rejected: ${title} (YouTube Short)`);
+                            continue;
+                        }
 
-                    if (link.includes('/shorts/')) {
-                        this.logger.debug(`Rejected: ${title} (YouTube Short)`);
-                        continue;
-                    }
+                        // const score = this.headlineAnalysisProvider.calculateScore(title);
+                        const aiScore = await this.aiHeadlineAnalysisProvider.scoreHeadline(title);
 
-                    // const score = this.headlineAnalysisProvider.calculateScore(title);
-                    const aiScore = await this.aiHeadlineAnalysisProvider.scoreHeadline(title);
+                        if (aiScore >= 8) {
+                            urls.push(link);
 
-                    if (aiScore >= 8) {
-                        urls.push(link);
+                            // Cache the video ID for 24 hours (86400 seconds)
+                            await this.redis.setex(videoId, 86400, '1');
 
-                        // Cache the video ID for 24 hours (86400 seconds)
-                        await this.redis.setex(videoId, 86400, '1');
-
-                        // this.logger.log(`Accepted: ${title} (AI score: ${score})`);
-                        this.logger.log(`Accepted: ${title} (AI score: ${aiScore})`);
-                    } else {
-                        // this.logger.debug(`Rejected: ${title} (score: ${score})`);
-                        this.logger.debug(`Rejected: ${title} (AI score: ${aiScore})`);
+                            // this.logger.log(`Accepted: ${title} (AI score: ${score})`);
+                            this.logger.log(`Accepted: ${title} (AI score: ${aiScore})`);
+                        } else {
+                            // this.logger.debug(`Rejected: ${title} (score: ${score})`);
+                            this.logger.debug(`Rejected: ${title} (AI score: ${aiScore})`);
+                        }
+                    } catch (error) {
+                        this.logger.error(
+                            `Failed to process item from ${feedUrl}: ${error.message}`
+                        );
                     }
                 }
             } catch (error) {

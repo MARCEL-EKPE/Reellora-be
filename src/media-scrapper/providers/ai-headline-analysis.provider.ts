@@ -14,6 +14,11 @@ export class AiHeadlineAnalysisProvider {
             throw new Error('OPENAI_API_KEY is not set');
         }
 
+        const openAiBaseUrl =
+            this.configService.get<string>('OPENAI_API_BASE_URL') ||
+            this.configService.get<string>('OPENAI_API_BASE') ||
+            'https://api.openai.com';
+
         const prompt = `
 You are a senior global news editor.
 
@@ -36,7 +41,7 @@ Headline:
 "${title}"`;
 
         const res = await axios.post(
-            `${this.configService.get('OPENAI_API_BASE')}/v1/chat/completions`,
+            `${openAiBaseUrl}/v1/chat/completions`,
             {
                 model: this.configService.get('OPENAI_CHAT_MODEL'),
                 messages: [
