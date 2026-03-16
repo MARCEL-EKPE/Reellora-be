@@ -1,25 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Parser from 'rss-parser';
-import IORedis from 'ioredis';
 import { articleFeeds, videoFeeds } from '../feeds';
 import { HeadlineAnalysisProvider } from './headline-analysis.provider';
 import { AiHeadlineAnalysisProvider } from './ai-headline-analysis.provider';
+import { RedisService } from 'src/common/redis/redis.service';
 
 @Injectable()
 export class FeedDiscoveryProvider {
-    private redis: IORedis;
-
     constructor(
+        private readonly redisService: RedisService,
         private readonly headlineAnalysisProvider: HeadlineAnalysisProvider,
         private readonly aiHeadlineAnalysisProvider: AiHeadlineAnalysisProvider
-    ) {
-        // Initialize Redis connection (localhost:6379)
-        this.redis = new IORedis({
-            host: 'localhost',
-            port: 6379,
-            maxRetriesPerRequest: null,
-        });
-    }
+    ) { }
 
     private logger = new Logger(FeedDiscoveryProvider.name);
     private parser = new Parser();
@@ -37,11 +29,11 @@ export class FeedDiscoveryProvider {
                         const videoId = item.id || link;
 
                         //Check if video was already processed(cached)
-                        const cachedVideo = await this.redis.exists(videoId);
-                        if (cachedVideo) {
-                            this.logger.debug(`Skipped (already processed): ${title}`)
-                            continue;
-                        }
+                        // const cachedVideo = await this.redisService.client.exists(videoId);
+                        // if (cachedVideo) {
+                        //     this.logger.debug(`Skipped (already processed): ${title}`)
+                        //     continue;
+                        // }
 
                         if (link.includes('/shorts/')) {
                             this.logger.debug(`Rejected: ${title} (YouTube Short)`);
@@ -55,7 +47,7 @@ export class FeedDiscoveryProvider {
                             urls.push(link);
 
                             // Cache the video ID for 24 hours (86400 seconds)
-                            await this.redis.setex(videoId, 86400, '1');
+                            await this.redisService.client.setex(videoId, 86400, '1');
 
                             // this.logger.log(`Accepted: ${title} (AI score: ${score})`);
                             this.logger.log(`Accepted: ${title} (AI score: ${aiScore})`);

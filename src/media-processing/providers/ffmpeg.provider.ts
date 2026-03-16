@@ -138,4 +138,17 @@ export class FfmpegProvider {
         });
     }
 
+    async extractFrame(inputVideoPath: string, outputImagePath: string, timestampSeconds: number): Promise<string> {
+        return new Promise((resolve, reject) => {
+            ffmpeg(inputVideoPath)
+                .setStartTime(timestampSeconds)
+                .frames(1)
+                .outputOptions(['-vf scale=640:-2', '-q:v 8'])
+                .output(outputImagePath)
+                .on('end', () => resolve(outputImagePath))
+                .on('error', reject)
+                .run();
+        });
+    }
+
 }

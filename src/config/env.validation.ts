@@ -1,6 +1,8 @@
 import * as Joi from 'joi'
 
 export default Joi.object({
+    REDIS_HOST: Joi.string().default('localhost'),
+    REDIS_PORT: Joi.number().port().default(6379),
     DB_HOST: Joi.string().required(),
     DB_PORT: Joi.number().port().default(5432),
     DB_USERNAME: Joi.string().required(),

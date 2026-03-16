@@ -52,7 +52,7 @@ export class MediaProcessorWorker extends WorkerHost {
                         console.warn('Unable to read transcriptPath, falling back to provided transcript');
                     }
                 }
-                const highlights = await this.aiProvider.selectHighlights(transcript, job.data.maxHighlights || 5);
+                const highlights = await this.aiProvider.selectHighlights(transcript, job.data.maxHighlights);
                 if (job.data.outputPath) {
                     try {
                         fs.writeFileSync(job.data.outputPath, JSON.stringify(highlights));
@@ -61,6 +61,28 @@ export class MediaProcessorWorker extends WorkerHost {
                     }
                 }
                 return highlights;
+            }
+
+            case 'summarize-news': {
+                let transcript = job.data.transcript;
+                if (job.data.transcriptPath) {
+                    try {
+                        const raw = fs.readFileSync(job.data.transcriptPath, 'utf-8');
+                        transcript = JSON.parse(raw);
+                    } catch (err) {
+                        console.warn('Unable to read transcriptPath for summary, falling back to provided transcript');
+                    }
+                }
+
+                const summary = await this.aiProvider.summarizeNewsTranscript(transcript);
+                if (job.data.outputPath) {
+                    try {
+                        fs.writeFileSync(job.data.outputPath, JSON.stringify(summary));
+                    } catch (err) {
+                        console.warn('Unable to write summary output file', err.message);
+                    }
+                }
+                return summary;
             }
 
             case 'generate-tts':
@@ -74,6 +96,37 @@ export class MediaProcessorWorker extends WorkerHost {
 
             case 'replace-audio':
                 return this.ffmpegProvider.replaceAudio(job.data.inputVideo, job.data.inputAudio, job.data.output);
+
+            case 'extract-frame':
+                return this.ffmpegProvider.extractFrame(job.data.input, job.data.output, job.data.timestampSeconds);
+
+            case 'score-visual-highlights': {
+                let transcript = job.data.transcript;
+                if (job.data.transcriptPath) {
+                    try {
+                        const raw = fs.readFileSync(job.data.transcriptPath, 'utf-8');
+                        transcript = JSON.parse(raw);
+                    } catch (err) {
+                        console.warn('Unable to read transcriptPath for visual scoring, falling back to provided transcript');
+                    }
+                }
+
+                const refined = await this.aiProvider.refineHighlightsWithVision({
+                    transcript,
+                    candidates: job.data.candidates || [],
+                    sampledFrames: job.data.sampledFrames || [],
+                });
+
+                if (job.data.outputPath) {
+                    try {
+                        fs.writeFileSync(job.data.outputPath, JSON.stringify(refined));
+                    } catch (err) {
+                        console.warn('Unable to write visual scoring output file', err.message);
+                    }
+                }
+
+                return refined;
+            }
 
             default:
                 throw new Error(`Unknown job type: ${job.name}`);

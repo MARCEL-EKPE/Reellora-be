@@ -22,6 +22,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppMcpModule } from './mcp/mcp.module';
 import { MediaScrapperModule } from './media-scrapper/media-scrapper.module';
+import { RedisModule } from './common/redis/redis.module';
 
 @Module({
   imports: [UsersModule, SocialAccountsModule, AuthModule, MediaProcessingModule, ConfigModule.forRoot({
@@ -29,6 +30,7 @@ import { MediaScrapperModule } from './media-scrapper/media-scrapper.module';
     load: [databaseConfig, appConfig],
     validationSchema: envValidation
   }),
+    RedisModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
