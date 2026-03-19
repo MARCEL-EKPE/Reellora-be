@@ -2,7 +2,6 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 // import { Cron } from '@nestjs/schedule'; // Commented out for testing
 import * as path from 'path';
 import { VideoSourceProvider, SourcedVideoMetadata } from './video-source.provider';
-import { VideoUploadProvider } from './video-upload.provider';
 import { Queue, QueueEvents } from 'bullmq';
 import * as fs from 'fs';
 import { MediaScrapperService } from 'src/media-scrapper/providers/media-scrapper.service';
@@ -21,7 +20,6 @@ export class MediaProcessingService implements OnModuleInit, OnModuleDestroy {
         private readonly redisService: RedisService,
         private readonly mediaScrapperService: MediaScrapperService,
         private readonly videoSourceProvider: VideoSourceProvider,
-        private readonly videoUploadProvider: VideoUploadProvider,
     ) {
         this.queueEvents = new QueueEvents('video-processing', {
             connection: this.videoQueue.opts.connection,
@@ -268,8 +266,8 @@ export class MediaProcessingService implements OnModuleInit, OnModuleDestroy {
         await this._executeQueueJob('merge-videos', { inputs: clipPaths, output: mergedPath }, sessionId);
 
 
-        // 2.5.5: Generate TTS from highlight transcript segments only
-        this.logger.debug(`[${sessionId}] 2.5.5 Generating TTS audio from highlight segments...`);
+        // 2.5.5: Generate TTS from summary (what_happened) with fallback to highlights
+        this.logger.debug(`[${sessionId}] 2.5.5 Generating TTS audio from summary...`);
         const transcriptRaw = fs.readFileSync(transcriptPath, 'utf-8');
         const transcriptJson = JSON.parse(transcriptRaw);
         const transcriptSegments: Array<{ start: number; end: number; text: string }> = transcriptJson?.segments ?? [];
@@ -282,7 +280,26 @@ export class MediaProcessingService implements OnModuleInit, OnModuleDestroy {
             )
             .join(' ')
             .trim();
-        const ttsText = highlightText || transcriptJson?.text || '';
+
+        const requiredOpener = `5 minutes from now, you'll be smarter than 95% of people on today's world events — this is KnowIn5.`;
+
+        let summaryWhatHappened = '';
+        if (fs.existsSync(summaryPath)) {
+            try {
+                const summaryRaw = fs.readFileSync(summaryPath, 'utf-8');
+                const summaryJson = JSON.parse(summaryRaw);
+                summaryWhatHappened = typeof summaryJson?.what_happened === 'string' ? summaryJson.what_happened.trim() : '';
+            } catch {
+
+            }
+        }
+
+        const fallbackBody = (highlightText || transcriptJson?.text || '').trim();
+        const seededSummary = summaryWhatHappened || (fallbackBody ? `${requiredOpener} ${fallbackBody}` : requiredOpener);
+        const ttsText = seededSummary.startsWith(requiredOpener)
+            ? seededSummary
+            : `${requiredOpener} ${seededSummary}`.trim();
+
         fs.writeFileSync(transcriptTextPath, ttsText);
         await this._executeQueueJob(
             'generate-tts',

@@ -5,4 +5,5 @@ export default registerAs('media-processingConfig', () => ({
     openAIApiBase: process.env.OPENAI_API_BASE_URL || 'https://api.openai.com',
     openAIChatModel: process.env.OPENAI_CHAT_MODEL || 'gpt-4',
     openAIVisionModel: process.env.OPENAI_VISION_MODEL || 'gpt-4o-mini',
+    ttsIntroVoice: process.env.TTS_INTRO_VOICE || 'onyx',
 }))

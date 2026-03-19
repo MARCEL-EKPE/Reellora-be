@@ -7,6 +7,9 @@ import mediaProcessingConfig from './config/media-processing.config';
 import { FfmpegProvider } from './providers/ffmpeg.provider';
 import { TranscriptionProvider } from './providers/transcription.provider';
 import { AiProvider } from './providers/ai.provider';
+import { HighlightExtractionProvider } from './providers/highlight-extraction.provider';
+import { TranscriptSummaryProvider } from './providers/transcript-summary.provider';
+import { VisualHighlightsProvider } from './providers/visual-highlights.provider';
 import { VideoSourceProvider } from './providers/video-source.provider';
 import { VideoUploadProvider } from './providers/video-upload.provider';
 import { TextToSpeechProvider } from './providers/text-to-speech.provider';
@@ -24,6 +27,9 @@ import { MediaScrapperModule } from 'src/media-scrapper/media-scrapper.module';
     FfmpegProvider,
     TranscriptionProvider,
     AiProvider,
+    HighlightExtractionProvider,
+    TranscriptSummaryProvider,
+    VisualHighlightsProvider,
     VideoSourceProvider,
     VideoUploadProvider,
     TextToSpeechProvider,
