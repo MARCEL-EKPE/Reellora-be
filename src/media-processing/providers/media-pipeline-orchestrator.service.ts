@@ -1,16 +1,20 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 // import { Cron } from '@nestjs/schedule'; // Commented out for testing
 import * as path from 'path';
-import { VideoSourceProvider, SourcedVideoMetadata } from './video-source.provider';
+import { VideoIngestProvider, SourcedVideoMetadata } from './video-ingest.provider';
 import { Queue, QueueEvents } from 'bullmq';
 import * as fs from 'fs';
 import { MediaScrapperService } from 'src/media-scrapper/providers/media-scrapper.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { RedisService } from 'src/common/redis/redis.service';
+import {
+    NarrationScene,
+    TranscriptSegment,
+} from '../interfaces/narration-scene.interface';
 
 @Injectable()
-export class MediaProcessingService implements OnModuleInit, OnModuleDestroy {
-    private readonly logger = new Logger(MediaProcessingService.name);
+export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleDestroy {
+    private readonly logger = new Logger(MediaPipelineOrchestratorService.name);
     private readonly baseDir = path.join(process.cwd(), 'videos');
     private readonly queueEvents: QueueEvents;
 
@@ -19,7 +23,7 @@ export class MediaProcessingService implements OnModuleInit, OnModuleDestroy {
         private readonly videoQueue: Queue,
         private readonly redisService: RedisService,
         private readonly mediaScrapperService: MediaScrapperService,
-        private readonly videoSourceProvider: VideoSourceProvider,
+        private readonly videoIngestProvider: VideoIngestProvider,
     ) {
         this.queueEvents = new QueueEvents('video-processing', {
             connection: this.videoQueue.opts.connection,
@@ -131,7 +135,7 @@ export class MediaProcessingService implements OnModuleInit, OnModuleDestroy {
 
     private async _downloadVideo(sourceUrl: string): Promise<SourcedVideoMetadata> {
         try {
-            const metadata = await this.videoSourceProvider.downloadYouTubeVideo(sourceUrl, this.baseDir);
+            const metadata = await this.videoIngestProvider.downloadYouTubeVideo(sourceUrl, this.baseDir);
             return metadata;
         } catch (err) {
             throw new Error(`Download failed: ${err.message}`);
@@ -152,7 +156,7 @@ export class MediaProcessingService implements OnModuleInit, OnModuleDestroy {
         const transcriptTextPath = path.join(sessionDir, 'transcript.txt');
         const summaryPath = path.join(sessionDir, 'news-summary.json');
         const highlightsPath = path.join(sessionDir, 'highlights.json');
-        const refinedHighlightsPath = path.join(sessionDir, 'highlights-refined.json');
+        const scenePlanPath = path.join(sessionDir, 'scene-plan.json');
         const clipsDir = path.join(sessionDir, 'clips');
         const framesDir = path.join(sessionDir, 'frames');
         const mergedPath = path.join(sessionDir, 'merged.mp4');
@@ -195,82 +199,11 @@ export class MediaProcessingService implements OnModuleInit, OnModuleDestroy {
         }
         this.logger.debug(`[${sessionId}] Found ${highlights.length} highlight segments`);
 
-        // 2.3.5: Refine highlight windows using sampled frames + vision model
-        const sampledFrames: Array<{ windowIndex: number; timestamp: number; path: string }> = [];
-        const maxFramesPerWindow = 3;
-        const minFrameGapSeconds = 2.0;
-        const maxTotalSampledFrames = 24;
-
-        for (let i = 0; i < highlights.length; i++) {
-            if (sampledFrames.length >= maxTotalSampledFrames) break;
-            const highlight = highlights[i];
-            const start = Number(highlight.start) || 0;
-            const end = Number(highlight.end) || start;
-            const duration = Math.max(0, end - start);
-            if (duration <= 0.1) continue;
-
-            const frameCount = Math.max(1, Math.min(maxFramesPerWindow, Math.ceil(duration / minFrameGapSeconds)));
-            for (let frameIndex = 0; frameIndex < frameCount; frameIndex++) {
-                if (sampledFrames.length >= maxTotalSampledFrames) break;
-                const timestamp = start + ((frameIndex + 0.5) * duration) / frameCount;
-                const framePath = path.join(framesDir, `h${i}-f${frameIndex}.jpg`);
-                await this._executeQueueJob(
-                    'extract-frame',
-                    { input: videoPath, output: framePath, timestampSeconds: timestamp },
-                    sessionId,
-                );
-                sampledFrames.push({ windowIndex: i, timestamp, path: framePath });
-            }
-        }
-
-
-        if (sampledFrames.length > 0) {
-            this.logger.debug(`[${sessionId}] 2.3.5 Refining highlights with ${sampledFrames.length} sampled frame(s)...`);
-            try {
-                const refined = await this._executeQueueJob(
-                    'score-visual-highlights',
-                    {
-                        transcriptPath,
-                        candidates: highlights,
-                        sampledFrames,
-                        outputPath: refinedHighlightsPath,
-                    },
-                    sessionId,
-                );
-
-                if (Array.isArray(refined) && refined.length > 0) {
-                    highlights = refined;
-                    this.logger.debug(`[${sessionId}] Refined to ${highlights.length} visually-scored highlight segments`);
-                }
-            } catch (err) {
-                this.logger.warn(`[${sessionId}] Visual refinement failed, continuing with transcript highlights: ${err.message}`);
-            }
-        }
-
-        // 2.4: Cut highlight segments
-        this.logger.debug(`[${sessionId}] 2.4 Cutting ${highlights.length} highlight segments...`);
-        const clipPaths: string[] = [];
-        for (let i = 0; i < highlights.length; i++) {
-            const h = highlights[i];
-            const start = h.start;
-            const end = h.end;
-            const duration = Math.max(0.5, end - start);
-            const clipPath = path.join(clipsDir, `clip-${i}.mp4`);
-            await this._executeQueueJob('cut-segment', { input: videoPath, output: clipPath, start, duration }, sessionId);
-            clipPaths.push(clipPath);
-        }
-
-
-        // 2.5: Merge clips
-        this.logger.debug(`[${sessionId}] 2.5 Merging clips...`);
-        await this._executeQueueJob('merge-videos', { inputs: clipPaths, output: mergedPath }, sessionId);
-
-
-        // 2.5.5: Generate TTS from summary (what_happened) with fallback to highlights
-        this.logger.debug(`[${sessionId}] 2.5.5 Generating TTS audio from summary...`);
+        // 2.4: Generate TTS from summary (what_happened) with fallback to highlights
+        this.logger.debug(`[${sessionId}] 2.4 Generating TTS audio from summary...`);
         const transcriptRaw = fs.readFileSync(transcriptPath, 'utf-8');
         const transcriptJson = JSON.parse(transcriptRaw);
-        const transcriptSegments: Array<{ start: number; end: number; text: string }> = transcriptJson?.segments ?? [];
+        const transcriptSegments: TranscriptSegment[] = transcriptJson?.segments ?? [];
         const highlightText = highlights
             .map((h: any) =>
                 transcriptSegments
@@ -307,17 +240,111 @@ export class MediaProcessingService implements OnModuleInit, OnModuleDestroy {
             sessionId
         );
 
+        const ttsDuration = await this._executeQueueJob('probe-media-duration', { input: ttsAudioPath }, sessionId);
+        this.logger.debug(`[${sessionId}] Planned narration audio duration: ${Number(ttsDuration).toFixed(2)}s`);
 
-        // 2.6: Replace merged video audio with TTS
-        this.logger.debug(`[${sessionId}] 2.6 Replacing audio with TTS...`);
+        const narrationScenes = this._buildNarrationScenePlan({
+            ttsText,
+            totalDuration: Number(ttsDuration) || this._getTranscriptDuration(transcriptSegments),
+            transcriptSegments,
+        });
+        fs.writeFileSync(scenePlanPath, JSON.stringify(narrationScenes, null, 2));
+        this.logger.debug(`[${sessionId}] 2.5 Building ${narrationScenes.length} narration-driven scene(s)...`);
+
+        // 2.5.5: Extract 3 candidate frames per scene (at 20 / 50 / 80 % of its mapped video window)
+        //        then ask the vision model to pick the frame that best illustrates the narration.
+        this.logger.debug(`[${sessionId}] 2.5.5 Selecting best frame per scene with vision model...`);
+        const transcriptDuration = this._getTranscriptDuration(transcriptSegments);
+        const ttsAudioDuration = Number(ttsDuration) || transcriptDuration || narrationScenes.length * 3;
+
+        const sceneCandidates: Array<{ sceneIndex: number; frames: Array<{ path: string; timestamp: number }> }> = [];
+        for (const scene of narrationScenes) {
+            const videoStart = ttsAudioDuration > 0 ? (scene.startTime / ttsAudioDuration) * transcriptDuration : 0;
+            const videoEnd = ttsAudioDuration > 0 ? (scene.endTime / ttsAudioDuration) * transcriptDuration : transcriptDuration;
+            const range = Math.max(1, videoEnd - videoStart);
+            const safeMax = Math.max(0.5, transcriptDuration - 0.5);
+            // Extract 8 frames at evenly-spaced intervals across the scene's time window
+            const timestamps = Array.from({ length: 8 }, (_, i) => {
+                const ratio = (i + 1) / 9; // Divide into 9 equal parts, sample from 1/9 to 8/9
+                return Math.min(safeMax, Math.max(0.5, videoStart + range * ratio));
+            });
+            const frames: Array<{ path: string; timestamp: number }> = [];
+            for (let fi = 0; fi < timestamps.length; fi++) {
+                const framePath = path.join(framesDir, `scene-${scene.index}-f${fi}.jpg`);
+                await this._executeQueueJob(
+                    'extract-frame',
+                    { input: videoPath, output: framePath, timestampSeconds: timestamps[fi] },
+                    sessionId,
+                );
+                frames.push({ path: framePath, timestamp: timestamps[fi] });
+            }
+            sceneCandidates.push({ sceneIndex: scene.index, frames });
+        }
+
+        let frameSelections: Array<{ sceneIndex: number; bestFramePath: string }> = [];
+        try {
+            frameSelections = await this._executeQueueJob(
+                'select-scene-frames',
+                {
+                    scenes: narrationScenes.map(s => ({ index: s.index, text: s.text })),
+                    sceneCandidates,
+                },
+                sessionId,
+            );
+        } catch (err) {
+            this.logger.warn(`[${sessionId}] Vision frame selection failed, falling back to proportional timestamps: ${err.message}`);
+        }
+
+        const frameSelectionMap = new Map(frameSelections.map(s => [s.sceneIndex, s.bestFramePath]));
+
+        // Build one clip per scene using the vision-selected frame (or fallback frame)
+        const sceneClipPaths: string[] = [];
+        for (const scene of narrationScenes) {
+            let framePath = frameSelectionMap.get(scene.index);
+            if (!framePath) {
+                // Fallback: extract a single frame at the proportional midpoint
+                framePath = path.join(framesDir, `scene-${scene.index}-fallback.jpg`);
+                await this._executeQueueJob(
+                    'extract-frame',
+                    { input: videoPath, output: framePath, timestampSeconds: scene.targetTimestamp },
+                    sessionId,
+                );
+            }
+            const clipPath = path.join(clipsDir, `scene-${scene.index}.mp4`);
+            await this._executeQueueJob(
+                'create-image-video',
+                { input: framePath, output: clipPath, duration: scene.duration },
+                sessionId,
+            );
+            sceneClipPaths.push(clipPath);
+        }
+
+        // 2.6: Merge scene clips
+        this.logger.debug(`[${sessionId}] 2.6 Merging ${sceneClipPaths.length} narration scene clip(s)...`);
+        await this._executeQueueJob('merge-videos', { inputs: sceneClipPaths, output: mergedPath }, sessionId);
+
+        // 2.7: Replace merged video audio with TTS
+        this.logger.debug(`[${sessionId}] 2.7 Replacing audio with TTS...`);
         await this._executeQueueJob('replace-audio', { inputVideo: mergedPath, inputAudio: ttsAudioPath, output: mergedWithTtsPath }, sessionId);
 
 
-        // 2.7: Add watermark
-        this.logger.debug(`[${sessionId}] 2.7 Adding watermark...`);
+        // 2.8: Add watermark
+        this.logger.debug(`[${sessionId}] 2.8 Adding watermark...`);
         await this._executeQueueJob('add-watermark', { input: mergedWithTtsPath, output: finalOutput, logoPath: logo }, sessionId);
 
-        return { videoPath, audioPath, transcriptPath, summaryPath, highlightsPath, clipsDir, mergedPath, finalOutput, highlights };
+        return {
+            videoPath,
+            audioPath,
+            transcriptPath,
+            summaryPath,
+            highlightsPath,
+            scenePlanPath,
+            clipsDir,
+            mergedPath,
+            finalOutput,
+            highlights,
+            narrationScenes,
+        };
     }
 
     /**
@@ -333,5 +360,117 @@ export class MediaProcessingService implements OnModuleInit, OnModuleDestroy {
         } catch (err) {
             throw new Error(`Job "${jobName}" failed: ${err.message}`);
         }
+    }
+
+    private _buildNarrationScenePlan(params: {
+        ttsText: string;
+        totalDuration: number;
+        transcriptSegments: TranscriptSegment[];
+    }): NarrationScene[] {
+        const { ttsText, totalDuration, transcriptSegments } = params;
+        const sceneTexts = this._deriveNarrationSceneTexts(ttsText);
+        const effectiveDuration = totalDuration > 0 ? totalDuration : Math.max(6, sceneTexts.length * 3);
+        const sceneDurations = this._allocateSceneDurations(sceneTexts, effectiveDuration);
+        const transcriptDuration = this._getTranscriptDuration(transcriptSegments) || effectiveDuration;
+        const scenes: NarrationScene[] = [];
+
+        let currentStartTime = 0;
+        for (let index = 0; index < sceneTexts.length; index++) {
+            const text = sceneTexts[index];
+            const duration = sceneDurations[index] ?? 3;
+            const startTime = currentStartTime;
+            const endTime = index === sceneTexts.length - 1 ? effectiveDuration : startTime + duration;
+            const targetTimestamp = transcriptDuration > 0
+                ? Math.min(transcriptDuration, Math.max(0.5, ((startTime + endTime) / 2 / effectiveDuration) * transcriptDuration))
+                : 0.5;
+            scenes.push({
+                index,
+                text,
+                startTime,
+                endTime,
+                duration: Math.max(1, endTime - startTime),
+                targetTimestamp: Number(targetTimestamp.toFixed(2)),
+            });
+
+            currentStartTime = endTime;
+        }
+
+        return scenes;
+    }
+
+    private _deriveNarrationSceneTexts(ttsText: string): string[] {
+        const normalized = (ttsText || '').replace(/\s+/g, ' ').trim();
+        if (!normalized) {
+            return ['Today\'s top story'];
+        }
+
+        const sentences = normalized
+            .split(/(?<=[.!?])\s+/)
+            .flatMap(sentence => sentence.split(/(?<=[,;:])\s+/))
+            .map(sentence => sentence.trim())
+            .filter(Boolean);
+
+        const maxScenes = 8;
+        const minWordsPerScene = 6;
+        const chunks: string[] = [];
+        let buffer: string[] = [];
+
+        for (const sentence of sentences) {
+            const words = sentence.split(/\s+/).filter(Boolean);
+            if (words.length >= minWordsPerScene || !buffer.length) {
+                if (buffer.length) {
+                    chunks.push(buffer.join(' ').trim());
+                    buffer = [];
+                }
+                chunks.push(sentence);
+                continue;
+            }
+
+            buffer.push(sentence);
+            if (buffer.join(' ').split(/\s+/).length >= minWordsPerScene) {
+                chunks.push(buffer.join(' ').trim());
+                buffer = [];
+            }
+        }
+
+        if (buffer.length) {
+            chunks.push(buffer.join(' ').trim());
+        }
+
+        const sceneTexts = chunks.length ? chunks : [normalized];
+        while (sceneTexts.length > maxScenes) {
+            const last = sceneTexts.pop();
+            if (!last) break;
+            sceneTexts[sceneTexts.length - 1] = `${sceneTexts[sceneTexts.length - 1]} ${last}`.trim();
+        }
+
+        return sceneTexts;
+    }
+
+    private _allocateSceneDurations(sceneTexts: string[], totalDuration: number): number[] {
+        const safeTotalDuration = Math.max(1, totalDuration || sceneTexts.length * 3);
+        const weights = sceneTexts.map(text => Math.max(1, text.split(/\s+/).filter(Boolean).length));
+        const weightSum = weights.reduce((sum, weight) => sum + weight, 0) || sceneTexts.length;
+
+        let consumed = 0;
+        return sceneTexts.map((_, index) => {
+            if (index === sceneTexts.length - 1) {
+                return Number(Math.max(1, safeTotalDuration - consumed).toFixed(3));
+            }
+
+            const duration = Number(((weights[index] / weightSum) * safeTotalDuration).toFixed(3));
+            const remainingScenes = sceneTexts.length - index - 1;
+            const maxAllowed = Math.max(1, safeTotalDuration - consumed - remainingScenes);
+            const safeDuration = Number(Math.max(1, Math.min(maxAllowed, Math.max(1.25, duration))).toFixed(3));
+            consumed += safeDuration;
+            return safeDuration;
+        });
+    }
+
+    private _getTranscriptDuration(transcriptSegments: TranscriptSegment[]): number {
+        if (!transcriptSegments.length) {
+            return 0;
+        }
+        return Number(transcriptSegments[transcriptSegments.length - 1]?.end || 0);
     }
 }

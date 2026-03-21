@@ -2,17 +2,21 @@ import { OnWorkerEvent, Processor, WorkerHost } from "@nestjs/bullmq";
 import { Job } from "bullmq";
 import { FfmpegProvider } from "./ffmpeg.provider";
 import { TranscriptionProvider } from "./transcription.provider";
-import { AiProvider } from "./ai.provider";
+import { TranscriptHighlightExtractorProvider } from "./transcript-highlight-extractor.provider";
+import { NewsSummaryProvider } from "./news-summary.provider";
+import { VisionFrameSelectorProvider } from "./vision-frame-selector.provider";
 import { TextToSpeechProvider } from "./text-to-speech.provider";
 import * as fs from 'fs';
 
 @Processor('video-processing')
-export class MediaProcessorWorker extends WorkerHost {
+export class MediaJobsWorker extends WorkerHost {
 
     constructor(
         private readonly ffmpegProvider: FfmpegProvider,
         private readonly transcriptionProvider: TranscriptionProvider,
-        private readonly aiProvider: AiProvider,
+        private readonly transcriptHighlightExtractorProvider: TranscriptHighlightExtractorProvider,
+        private readonly newsSummaryProvider: NewsSummaryProvider,
+        private readonly visionFrameSelectorProvider: VisionFrameSelectorProvider,
         private readonly textToSpeechProvider: TextToSpeechProvider
     ) { super() }
 
@@ -52,7 +56,7 @@ export class MediaProcessorWorker extends WorkerHost {
                         console.warn('Unable to read transcriptPath, falling back to provided transcript');
                     }
                 }
-                const highlights = await this.aiProvider.selectHighlights(transcript, job.data.maxHighlights);
+                const highlights = await this.transcriptHighlightExtractorProvider.selectHighlights(transcript, job.data.maxHighlights);
                 if (job.data.outputPath) {
                     try {
                         fs.writeFileSync(job.data.outputPath, JSON.stringify(highlights));
@@ -74,7 +78,7 @@ export class MediaProcessorWorker extends WorkerHost {
                     }
                 }
 
-                const summary = await this.aiProvider.summarizeNewsTranscript(transcript);
+                const summary = await this.newsSummaryProvider.summarizeNewsTranscript(transcript);
                 if (job.data.outputPath) {
                     try {
                         fs.writeFileSync(job.data.outputPath, JSON.stringify(summary));
@@ -100,32 +104,17 @@ export class MediaProcessorWorker extends WorkerHost {
             case 'extract-frame':
                 return this.ffmpegProvider.extractFrame(job.data.input, job.data.output, job.data.timestampSeconds);
 
-            case 'score-visual-highlights': {
-                let transcript = job.data.transcript;
-                if (job.data.transcriptPath) {
-                    try {
-                        const raw = fs.readFileSync(job.data.transcriptPath, 'utf-8');
-                        transcript = JSON.parse(raw);
-                    } catch (err) {
-                        console.warn('Unable to read transcriptPath for visual scoring, falling back to provided transcript');
-                    }
-                }
+            case 'probe-media-duration':
+                return this.ffmpegProvider.getMediaDuration(job.data.input);
 
-                const refined = await this.aiProvider.refineHighlightsWithVision({
-                    transcript,
-                    candidates: job.data.candidates || [],
-                    sampledFrames: job.data.sampledFrames || [],
+            case 'create-image-video':
+                return this.ffmpegProvider.createVideoFromImage(job.data.input, job.data.output, job.data.duration);
+
+            case 'select-scene-frames': {
+                return this.visionFrameSelectorProvider.selectBestFramesForScenes({
+                    scenes: job.data.scenes || [],
+                    sceneCandidates: job.data.sceneCandidates || [],
                 });
-
-                if (job.data.outputPath) {
-                    try {
-                        fs.writeFileSync(job.data.outputPath, JSON.stringify(refined));
-                    } catch (err) {
-                        console.warn('Unable to write visual scoring output file', err.message);
-                    }
-                }
-
-                return refined;
             }
 
             default:

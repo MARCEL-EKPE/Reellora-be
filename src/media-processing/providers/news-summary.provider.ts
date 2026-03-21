@@ -1,10 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import mediaProcessingConfig from '../config/media-processing.config';
 import { type ConfigType } from '@nestjs/config';
 import axios from 'axios';
 
 @Injectable()
-export class TranscriptSummaryProvider {
+export class NewsSummaryProvider {
+    private readonly logger = new Logger(NewsSummaryProvider.name);
+
     constructor(
         @Inject(mediaProcessingConfig.KEY)
         private readonly config: ConfigType<typeof mediaProcessingConfig>
@@ -14,6 +16,18 @@ export class TranscriptSummaryProvider {
         if (!this.config.openAIApiKey) throw new Error('OPENAI_API_KEY is not set');
 
         const transcriptText = typeof transcript === 'string' ? transcript : this._stringifyTranscript(transcript);
+
+        // Validate transcript has meaningful content
+        if (!transcriptText || transcriptText.trim().length < 10) {
+            this.logger.warn('Transcript too short or empty; returning minimal summary');
+            return this._getMinimalFallbackSummary('Insufficient video content for analysis.');
+        }
+
+        // Truncate to reasonable length to avoid token limit issues
+        const maxCharacters = 8000;
+        const trimmedTranscript = transcriptText.length > maxCharacters
+            ? transcriptText.substring(0, maxCharacters) + '\n[... transcript truncated ...]'
+            : transcriptText;
 
         const messages = [
             {
@@ -36,34 +50,58 @@ export class TranscriptSummaryProvider {
                     `  "insufficient_evidence": boolean\n` +
                     `}\n\n` +
                     `Rules:\n` +
-                    `- Start what_happened with this exact opener sentence: "5 minutes from now, you'll be smarter than 95% of people on today's world events — this is KnowIn5." Then continue with a concise, factual event summary.\n` +
+                    // `- Start what_happened with this exact opener sentence: "5 minutes from now, you'll be smarter than 95% of people on today's world events — this is KnowIn5." Then continue with a concise, factual event summary.\n` +
                     `- Ground claims in transcript content only; do not invent facts.\n` +
                     `- Keep probability between 0 and 100.\n` +
                     `- Include at least one counter-view when evidence allows.\n` +
                     `- If transcript evidence is weak/short/unclear, set insufficient_evidence=true and reduce confidence.\n\n` +
-                    `Transcript:\n${transcriptText}`,
+                    `Transcript:\n${trimmedTranscript}`,
             },
         ];
 
-        const res = await axios.post(
-            `${this.config.openAIApiBase}/v1/chat/completions`,
-            {
-                model: this.config.openAIChatModel,
-                messages,
-                temperature: 0.2,
-                max_tokens: 1200,
-            },
-            {
-                headers: { Authorization: `Bearer ${this.config.openAIApiKey}` },
-            }
-        );
+        try {
+            const res = await axios.post(
+                `${this.config.openAIApiBase}/v1/chat/completions`,
+                {
+                    model: this.config.openAIChatModel,
+                    messages,
+                    temperature: 0.2,
+                    max_tokens: 1200,
+                },
+                {
+                    headers: { Authorization: `Bearer ${this.config.openAIApiKey}` },
+                }
+            );
 
-        const content = res.data?.choices?.[0]?.message?.content;
-        const parsed = this._parseJsonObject(content);
-        if (!parsed) {
-            throw new Error('Unable to parse model response as JSON object for transcript summary');
+            const content = res.data?.choices?.[0]?.message?.content;
+            const parsed = this._parseJsonObject(content);
+            if (!parsed) {
+                this.logger.warn('Failed to parse OpenAI response as JSON; returning fallback summary');
+                return this._getMinimalFallbackSummary(transcriptText.substring(0, 200));
+            }
+            return parsed;
+        } catch (err: any) {
+            const status = err?.response?.status;
+            const errData = err?.response?.data;
+            const errMessage = errData?.error?.message || err?.message || 'Unknown error';
+            this.logger.error(
+                `OpenAI summarization failed (status ${status}): ${errMessage}. Returning fallback summary.`
+            );
+            return this._getMinimalFallbackSummary(transcriptText.substring(0, 200));
         }
-        return parsed;
+    }
+
+    private _getMinimalFallbackSummary(snippet: string): any {
+        return {
+            what_happened: `5 minutes from now, you'll be smarter than 95% of people on today's world events — this is KnowIn5. ${snippet}`,
+            key_points: ['Unable to fully analyze transcript.'],
+            known_facts: [],
+            uncertainties: ['Full analysis could not be completed.'],
+            context: [],
+            perspectives: [],
+            next_updates: [],
+            insufficient_evidence: true,
+        };
     }
 
     private _stringifyTranscript(transcript: any) {

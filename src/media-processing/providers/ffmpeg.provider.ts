@@ -10,6 +10,16 @@ ffmpeg.setFfprobePath(ffprobeInstaller.path)
 @Injectable()
 export class FfmpegProvider {
 
+    async getMediaDuration(inputPath: string): Promise<number> {
+        return new Promise((resolve, reject) => {
+            ffmpeg.ffprobe(inputPath, (err, metadata) => {
+                if (err) return reject(err);
+                const duration = Number(metadata?.format?.duration ?? 0);
+                resolve(duration);
+            });
+        });
+    }
+
     async trimVideo(inputPath: string, outputPath: string, duration?: number): Promise<string> {
         return new Promise((resolve, reject) => {
             ffmpeg(inputPath)
@@ -143,9 +153,38 @@ export class FfmpegProvider {
             ffmpeg(inputVideoPath)
                 .setStartTime(timestampSeconds)
                 .frames(1)
-                .outputOptions(['-vf scale=640:-2', '-q:v 8'])
+                .outputOptions(['-vf scale=1920:-2', '-q:v 8'])
                 .output(outputImagePath)
                 .on('end', () => resolve(outputImagePath))
+                .on('error', reject)
+                .run();
+        });
+    }
+
+    async createVideoFromImage(inputImagePath: string, outputVideoPath: string, duration: number): Promise<string> {
+        const safeDuration = Math.max(1, Number(duration) || 1);
+        const fadeOutStart = Math.max(0, safeDuration - 0.35);
+
+        return new Promise((resolve, reject) => {
+            ffmpeg()
+                .input(inputImagePath)
+                .inputOptions(['-loop 1'])
+                .videoFilters([
+                    'scale=1080:1920:force_original_aspect_ratio=increase',
+                    'crop=1080:1920',
+                    'eq=saturation=1.05:contrast=1.02',
+                    'fade=t=in:st=0:d=0.25',
+                    `fade=t=out:st=${fadeOutStart.toFixed(3)}:d=0.25`,
+                ])
+                .outputOptions([
+                    `-t ${safeDuration.toFixed(3)}`,
+                    '-r 25',
+                    '-pix_fmt yuv420p',
+                    '-an',
+                    '-movflags +faststart',
+                ])
+                .output(outputVideoPath)
+                .on('end', () => resolve(outputVideoPath))
                 .on('error', reject)
                 .run();
         });

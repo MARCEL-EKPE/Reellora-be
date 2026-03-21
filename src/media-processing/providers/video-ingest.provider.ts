@@ -16,7 +16,7 @@ export interface SourcedVideoMetadata {
 }
 
 @Injectable()
-export class VideoSourceProvider {
+export class VideoIngestProvider {
     // Use explicit env override if yt-dlp isn't on PATH
     private ytdlPath = process.env.YTDL_PATH || 'yt-dlp'; // ensure yt-dlp is installed
 
