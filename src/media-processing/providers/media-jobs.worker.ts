@@ -8,6 +8,10 @@ import { VisionFrameSelectorProvider } from "./vision-frame-selector.provider";
 import { TextToSpeechProvider } from "./text-to-speech.provider";
 import * as fs from 'fs';
 
+function getErrorMessage(err: unknown): string {
+    return err instanceof Error ? err.message : String(err);
+}
+
 @Processor('video-processing')
 export class MediaJobsWorker extends WorkerHost {
 
@@ -40,7 +44,7 @@ export class MediaJobsWorker extends WorkerHost {
                     try {
                         fs.writeFileSync(job.data.outputPath, JSON.stringify(result));
                     } catch (err) {
-                        console.warn('Unable to write transcription output file', err.message);
+                        console.warn('Unable to write transcription output file', getErrorMessage(err));
                     }
                 }
                 return result;
@@ -61,7 +65,7 @@ export class MediaJobsWorker extends WorkerHost {
                     try {
                         fs.writeFileSync(job.data.outputPath, JSON.stringify(highlights));
                     } catch (err) {
-                        console.warn('Unable to write highlights output file', err.message);
+                        console.warn('Unable to write highlights output file', getErrorMessage(err));
                     }
                 }
                 return highlights;
@@ -83,7 +87,7 @@ export class MediaJobsWorker extends WorkerHost {
                     try {
                         fs.writeFileSync(job.data.outputPath, JSON.stringify(summary));
                     } catch (err) {
-                        console.warn('Unable to write summary output file', err.message);
+                        console.warn('Unable to write summary output file', getErrorMessage(err));
                     }
                 }
                 return summary;
@@ -93,7 +97,9 @@ export class MediaJobsWorker extends WorkerHost {
                 return this.textToSpeechProvider.generateSpeech(job.data);
 
             case 'cut-segment':
-                return this.ffmpegProvider.cutVideo(job.data.input, job.data.output, job.data.start, job.data.duration);
+                return this.ffmpegProvider.cutVideo(job.data.input, job.data.output, job.data.start, job.data.duration, {
+                    mute: Boolean(job.data.mute),
+                });
 
             case 'merge-videos':
                 return this.ffmpegProvider.mergeVideos(job.data.inputs, job.data.output);
@@ -107,11 +113,8 @@ export class MediaJobsWorker extends WorkerHost {
             case 'probe-media-duration':
                 return this.ffmpegProvider.getMediaDuration(job.data.input);
 
-            case 'create-image-video':
-                return this.ffmpegProvider.createVideoFromImage(job.data.input, job.data.output, job.data.duration);
-
-            case 'select-scene-frames': {
-                return this.visionFrameSelectorProvider.selectBestFramesForScenes({
+            case 'select-scene-clips': {
+                return this.visionFrameSelectorProvider.selectBestClipsForScenes({
                     scenes: job.data.scenes || [],
                     sceneCandidates: job.data.sceneCandidates || [],
                 });

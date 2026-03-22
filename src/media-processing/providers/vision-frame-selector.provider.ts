@@ -4,15 +4,21 @@ import { type ConfigType } from '@nestjs/config';
 import axios from 'axios';
 import * as fs from 'fs';
 
-export interface SceneFrameCandidate {
+export interface SceneClipCandidate {
     sceneIndex: number;
-    frames: Array<{ path: string; timestamp: number }>;
+    clips: Array<{
+        path: string;
+        start: number;
+        duration: number;
+        previewFrames: Array<{ path: string; timestamp: number }>;
+    }>;
 }
 
-export interface SceneFrameSelection {
+export interface SceneClipSelection {
     sceneIndex: number;
-    bestFramePath: string;
-    bestTimestamp: number;
+    bestClipPath: string;
+    bestStart: number;
+    bestDuration: number;
 }
 
 @Injectable()
@@ -22,57 +28,62 @@ export class VisionFrameSelectorProvider {
         private readonly config: ConfigType<typeof mediaProcessingConfig>,
     ) { }
 
-    /**
-     * Given narration scene texts and their candidate frames extracted from the original video,
-     * asks the vision model to pick the frame that best visually illustrates each scene's narration.
-     * All scenes are batched into a single API call to minimise cost.
-     */
-    async selectBestFramesForScenes(params: {
+    async selectBestClipsForScenes(params: {
         scenes: Array<{ index: number; text: string }>;
-        sceneCandidates: SceneFrameCandidate[];
-    }): Promise<SceneFrameSelection[]> {
+        sceneCandidates: SceneClipCandidate[];
+    }): Promise<SceneClipSelection[]> {
         if (!this.config.openAIApiKey) throw new Error('OPENAI_API_KEY is not set');
 
         const { scenes, sceneCandidates } = params;
         if (!scenes?.length || !sceneCandidates?.length) return [];
 
-        const candidateMap = new Map(sceneCandidates.map(c => [c.sceneIndex, c.frames]));
+        const candidateMap = new Map(sceneCandidates.map(c => [c.sceneIndex, c.clips]));
 
-        // Build a single multi-part message: instruction → per-scene text + candidate frames
         const content: any[] = [
             {
                 type: 'text',
                 text:
-                    `You are matching narration scenes to video frames.\n` +
-                    `For each scene you are given a narration sentence and numbered candidate frames.\n` +
-                    `Select the frame that best visually illustrates what is described — prefer frames that show the actual event (violence, destruction, crowds, key figures, on-screen text, etc.).\n` +
-                    `Return ONLY a JSON array with one entry per scene: [{ "sceneIndex": number, "frameIndex": number }]`,
+                    `You are matching narration scenes to short silent video clips.\n` +
+                    `For each scene you are given a narration sentence and numbered candidate clips. Each clip is represented by three preview frames sampled from that clip.\n` +
+                    `Select the clip that best illustrates what is described — prefer clips that visually show the event, action, people, setting, or consequence mentioned in the narration.\n` +
+                    `Return ONLY a JSON array with one entry per scene: [{ "sceneIndex": number, "clipIndex": number }]`,
             },
         ];
 
         for (const scene of scenes) {
-            const frames = candidateMap.get(scene.index) ?? [];
-            if (!frames.length) continue;
+            const clips = candidateMap.get(scene.index) ?? [];
+            if (!clips.length) continue;
 
             content.push({ type: 'text', text: `\n--- Scene ${scene.index}: "${scene.text}" ---` });
 
-            for (let fi = 0; fi < frames.length; fi++) {
-                const frame = frames[fi];
-                try {
-                    const base64 = fs.readFileSync(frame.path).toString('base64');
-                    content.push({ type: 'text', text: `Frame ${fi} (t=${frame.timestamp.toFixed(2)}s):` });
-                    content.push({
-                        type: 'image_url',
-                        image_url: { url: `data:image/jpeg;base64,${base64}`, detail: 'low' },
-                    });
-                } catch {
-                    // skip unreadable frames silently
+            for (let ci = 0; ci < clips.length; ci++) {
+                const clip = clips[ci];
+                content.push({
+                    type: 'text',
+                    text: `Candidate clip ${ci} (start=${clip.start.toFixed(2)}s, duration=${clip.duration.toFixed(2)}s):`,
+                });
+
+                for (let pi = 0; pi < clip.previewFrames.length; pi++) {
+                    const previewFrame = clip.previewFrames[pi];
+                    try {
+                        const base64 = fs.readFileSync(previewFrame.path).toString('base64');
+                        content.push({
+                            type: 'text',
+                            text: `Preview ${pi} (t=${previewFrame.timestamp.toFixed(2)}s):`,
+                        });
+                        content.push({
+                            type: 'image_url',
+                            image_url: { url: `data:image/jpeg;base64,${base64}`, detail: 'low' },
+                        });
+                    } catch {
+                        // skip unreadable preview frames silently
+                    }
                 }
             }
         }
 
         const messages = [
-            { role: 'system', content: 'You select the best video frame for each narration scene.' },
+            { role: 'system', content: 'You select the best short silent clip for each narration scene.' },
             { role: 'user', content },
         ];
 
@@ -84,20 +95,25 @@ export class VisionFrameSelectorProvider {
             );
 
             const raw: string = res.data?.choices?.[0]?.message?.content ?? '';
-            const parsed: Array<{ sceneIndex: number; frameIndex: number }> = this._parseJsonArray(raw) ?? [];
+            const parsed: Array<{ sceneIndex: number; clipIndex: number }> = this._parseJsonArray(raw) ?? [];
 
             return parsed
-                .map(({ sceneIndex, frameIndex }) => {
-                    const frames = candidateMap.get(sceneIndex) ?? [];
-                    const frame = frames[frameIndex] ?? frames[0];
-                    if (!frame) return null;
-                    return { sceneIndex, bestFramePath: frame.path, bestTimestamp: frame.timestamp };
+                .map(({ sceneIndex, clipIndex }) => {
+                    const clips = candidateMap.get(sceneIndex) ?? [];
+                    const clip = clips[clipIndex] ?? clips[0];
+                    if (!clip) return null;
+                    return {
+                        sceneIndex,
+                        bestClipPath: clip.path,
+                        bestStart: clip.start,
+                        bestDuration: clip.duration,
+                    };
                 })
-                .filter((r): r is SceneFrameSelection => r !== null);
+                .filter((r): r is SceneClipSelection => r !== null);
         } catch (err: any) {
             const status = err?.response?.status;
             const data = err?.response?.data;
-            console.warn(`Vision frame selection failed (status ${status}): ${data ? JSON.stringify(data) : err?.message}`);
+            console.warn(`Vision clip selection failed (status ${status}): ${data ? JSON.stringify(data) : err?.message}`);
             return [];
         }
     }

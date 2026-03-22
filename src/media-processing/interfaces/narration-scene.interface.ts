@@ -16,8 +16,8 @@ export interface NarrationScene {
     startTime: number;
     endTime: number;
     duration: number;
-    /** Proportional midpoint mapped into original video time — used as fallback if vision selection fails */
+    /** Proportional midpoint mapped into original video time — used as fallback if clip selection fails */
     targetTimestamp: number;
-    /** Set after vision model selects the best frame for this scene */
-    selectedFramePath?: string;
+    /** Set after vision model selects the best clip for this scene */
+    selectedClipPath?: string;
 }

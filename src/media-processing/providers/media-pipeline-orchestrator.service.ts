@@ -11,6 +11,7 @@ import {
     NarrationScene,
     TranscriptSegment,
 } from '../interfaces/narration-scene.interface';
+import { SceneClipCandidate, SceneClipSelection } from './vision-frame-selector.provider';
 
 @Injectable()
 export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleDestroy {
@@ -159,6 +160,7 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
         const scenePlanPath = path.join(sessionDir, 'scene-plan.json');
         const clipsDir = path.join(sessionDir, 'clips');
         const framesDir = path.join(sessionDir, 'frames');
+        const candidateClipsDir = path.join(sessionDir, 'candidate-clips');
         const mergedPath = path.join(sessionDir, 'merged.mp4');
         const mergedWithTtsPath = path.join(sessionDir, 'merged-tts.mp4');
         const ttsAudioPath = path.join(sessionDir, 'tts-audio.mp3');
@@ -167,6 +169,7 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
 
         if (!fs.existsSync(clipsDir)) fs.mkdirSync(clipsDir, { recursive: true });
         if (!fs.existsSync(framesDir)) fs.mkdirSync(framesDir, { recursive: true });
+        if (!fs.existsSync(candidateClipsDir)) fs.mkdirSync(candidateClipsDir, { recursive: true });
 
         // 2.1: Extract audio
         this.logger.debug(`[${sessionId}] 2.1 Extracting audio...`);
@@ -214,24 +217,17 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
             .join(' ')
             .trim();
 
-        const requiredOpener = `5 minutes from now, you'll be smarter than 95% of people on today's world events — this is KnowIn5.`;
-
         let summaryWhatHappened = '';
         if (fs.existsSync(summaryPath)) {
             try {
                 const summaryRaw = fs.readFileSync(summaryPath, 'utf-8');
                 const summaryJson = JSON.parse(summaryRaw);
                 summaryWhatHappened = typeof summaryJson?.what_happened === 'string' ? summaryJson.what_happened.trim() : '';
-            } catch {
-
-            }
+            } catch { /* ignore parse errors */ }
         }
 
         const fallbackBody = (highlightText || transcriptJson?.text || '').trim();
-        const seededSummary = summaryWhatHappened || (fallbackBody ? `${requiredOpener} ${fallbackBody}` : requiredOpener);
-        const ttsText = seededSummary.startsWith(requiredOpener)
-            ? seededSummary
-            : `${requiredOpener} ${seededSummary}`.trim();
+        const ttsText = (summaryWhatHappened || fallbackBody).trim();
 
         fs.writeFileSync(transcriptTextPath, ttsText);
         await this._executeQueueJob(
@@ -251,40 +247,63 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
         fs.writeFileSync(scenePlanPath, JSON.stringify(narrationScenes, null, 2));
         this.logger.debug(`[${sessionId}] 2.5 Building ${narrationScenes.length} narration-driven scene(s)...`);
 
-        // 2.5.5: Extract 3 candidate frames per scene (at 20 / 50 / 80 % of its mapped video window)
-        //        then ask the vision model to pick the frame that best illustrates the narration.
-        this.logger.debug(`[${sessionId}] 2.5.5 Selecting best frame per scene with vision model...`);
+        // 2.5.5: Build candidate silent clips per narration scene, then ask the vision model
+        //        to choose the clip that best supports the narration using preview frames.
+        this.logger.debug(`[${sessionId}] 2.5.5 Selecting best silent clip per scene with vision model...`);
         const transcriptDuration = this._getTranscriptDuration(transcriptSegments);
         const ttsAudioDuration = Number(ttsDuration) || transcriptDuration || narrationScenes.length * 3;
 
-        const sceneCandidates: Array<{ sceneIndex: number; frames: Array<{ path: string; timestamp: number }> }> = [];
+        const sceneCandidates: SceneClipCandidate[] = [];
         for (const scene of narrationScenes) {
-            const videoStart = ttsAudioDuration > 0 ? (scene.startTime / ttsAudioDuration) * transcriptDuration : 0;
-            const videoEnd = ttsAudioDuration > 0 ? (scene.endTime / ttsAudioDuration) * transcriptDuration : transcriptDuration;
-            const range = Math.max(1, videoEnd - videoStart);
-            const safeMax = Math.max(0.5, transcriptDuration - 0.5);
-            // Extract 8 frames at evenly-spaced intervals across the scene's time window
-            const timestamps = Array.from({ length: 8 }, (_, i) => {
-                const ratio = (i + 1) / 9; // Divide into 9 equal parts, sample from 1/9 to 8/9
-                return Math.min(safeMax, Math.max(0.5, videoStart + range * ratio));
+            const clipCandidates = this._buildSceneClipCandidates({
+                scene,
+                transcriptDuration,
+                ttsAudioDuration,
             });
-            const frames: Array<{ path: string; timestamp: number }> = [];
-            for (let fi = 0; fi < timestamps.length; fi++) {
-                const framePath = path.join(framesDir, `scene-${scene.index}-f${fi}.jpg`);
+
+            const clips: SceneClipCandidate['clips'] = [];
+            for (let ci = 0; ci < clipCandidates.length; ci++) {
+                const candidate = clipCandidates[ci];
+                const clipPath = path.join(candidateClipsDir, `scene-${scene.index}-candidate-${ci}.mp4`);
                 await this._executeQueueJob(
-                    'extract-frame',
-                    { input: videoPath, output: framePath, timestampSeconds: timestamps[fi] },
+                    'cut-segment',
+                    {
+                        input: videoPath,
+                        output: clipPath,
+                        start: candidate.start,
+                        duration: candidate.duration,
+                        mute: true,
+                    },
                     sessionId,
                 );
-                frames.push({ path: framePath, timestamp: timestamps[fi] });
+
+                const previewFrames: Array<{ path: string; timestamp: number }> = [];
+                for (let pi = 0; pi < candidate.previewTimestamps.length; pi++) {
+                    const previewTimestamp = candidate.previewTimestamps[pi];
+                    const framePath = path.join(framesDir, `scene-${scene.index}-candidate-${ci}-preview-${pi}.jpg`);
+                    await this._executeQueueJob(
+                        'extract-frame',
+                        { input: videoPath, output: framePath, timestampSeconds: previewTimestamp },
+                        sessionId,
+                    );
+                    previewFrames.push({ path: framePath, timestamp: previewTimestamp });
+                }
+
+                clips.push({
+                    path: clipPath,
+                    start: candidate.start,
+                    duration: candidate.duration,
+                    previewFrames,
+                });
             }
-            sceneCandidates.push({ sceneIndex: scene.index, frames });
+
+            sceneCandidates.push({ sceneIndex: scene.index, clips });
         }
 
-        let frameSelections: Array<{ sceneIndex: number; bestFramePath: string }> = [];
+        let clipSelections: SceneClipSelection[] = [];
         try {
-            frameSelections = await this._executeQueueJob(
-                'select-scene-frames',
+            clipSelections = await this._executeQueueJob(
+                'select-scene-clips',
                 {
                     scenes: narrationScenes.map(s => ({ index: s.index, text: s.text })),
                     sceneCandidates,
@@ -292,31 +311,28 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
                 sessionId,
             );
         } catch (err) {
-            this.logger.warn(`[${sessionId}] Vision frame selection failed, falling back to proportional timestamps: ${err.message}`);
+            this.logger.warn(`[${sessionId}] Vision clip selection failed, falling back to middle candidate clips: ${err.message}`);
         }
 
-        const frameSelectionMap = new Map(frameSelections.map(s => [s.sceneIndex, s.bestFramePath]));
+        const sceneCandidateMap = new Map(sceneCandidates.map(candidate => [candidate.sceneIndex, candidate.clips]));
+        const clipSelectionMap = new Map(clipSelections.map(selection => [selection.sceneIndex, selection.bestClipPath]));
 
-        // Build one clip per scene using the vision-selected frame (or fallback frame)
+        // Build the final visual sequence using the vision-selected silent clips (or fallback candidate clip)
         const sceneClipPaths: string[] = [];
         for (const scene of narrationScenes) {
-            let framePath = frameSelectionMap.get(scene.index);
-            if (!framePath) {
-                // Fallback: extract a single frame at the proportional midpoint
-                framePath = path.join(framesDir, `scene-${scene.index}-fallback.jpg`);
-                await this._executeQueueJob(
-                    'extract-frame',
-                    { input: videoPath, output: framePath, timestampSeconds: scene.targetTimestamp },
-                    sessionId,
-                );
+            const candidateClips = sceneCandidateMap.get(scene.index) ?? [];
+            const selectedClipPath = clipSelectionMap.get(scene.index);
+            const fallbackClip = candidateClips[Math.floor(candidateClips.length / 2)] ?? candidateClips[0];
+            const chosenClip = candidateClips.find(candidate => candidate.path === selectedClipPath) ?? fallbackClip;
+
+            if (!chosenClip) {
+                throw new Error(`No candidate clip available for narration scene ${scene.index}`);
             }
-            const clipPath = path.join(clipsDir, `scene-${scene.index}.mp4`);
-            await this._executeQueueJob(
-                'create-image-video',
-                { input: framePath, output: clipPath, duration: scene.duration },
-                sessionId,
-            );
-            sceneClipPaths.push(clipPath);
+
+            const finalSceneClipPath = path.join(clipsDir, `scene-${scene.index}.mp4`);
+            fs.copyFileSync(chosenClip.path, finalSceneClipPath);
+            scene.selectedClipPath = finalSceneClipPath;
+            sceneClipPaths.push(finalSceneClipPath);
         }
 
         // 2.6: Merge scene clips
@@ -464,6 +480,45 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
             const safeDuration = Number(Math.max(1, Math.min(maxAllowed, Math.max(1.25, duration))).toFixed(3));
             consumed += safeDuration;
             return safeDuration;
+        });
+    }
+
+    private _buildSceneClipCandidates(params: {
+        scene: NarrationScene;
+        transcriptDuration: number;
+        ttsAudioDuration: number;
+    }): Array<{ start: number; duration: number; previewTimestamps: number[] }> {
+        const { scene, transcriptDuration, ttsAudioDuration } = params;
+        const safeTranscriptDuration = transcriptDuration > 0 ? transcriptDuration : Math.max(scene.targetTimestamp + scene.duration, scene.duration);
+        const mappedStart = ttsAudioDuration > 0 ? (scene.startTime / ttsAudioDuration) * safeTranscriptDuration : 0;
+        const mappedEnd = ttsAudioDuration > 0 ? (scene.endTime / ttsAudioDuration) * safeTranscriptDuration : safeTranscriptDuration;
+
+        const candidateDuration = Number(Math.max(1, Math.min(scene.duration, Math.max(1.5, mappedEnd - mappedStart || scene.duration))).toFixed(3));
+        const searchStart = Math.max(0, mappedStart - candidateDuration * 0.6);
+        const maxStart = Math.max(0, safeTranscriptDuration - candidateDuration);
+        const searchEnd = Math.min(maxStart, mappedEnd);
+        const candidateCount = 3;
+
+        const starts = searchEnd <= searchStart
+            ? [Math.min(maxStart, Math.max(0, scene.targetTimestamp - candidateDuration / 2))]
+            : Array.from({ length: candidateCount }, (_, index) => {
+                const ratio = index / (candidateCount - 1);
+                return searchStart + (searchEnd - searchStart) * ratio;
+            });
+
+        return starts.map((start) => {
+            const safeStart = Number(Math.max(0, Math.min(maxStart, start)).toFixed(3));
+            const previewRatios = [0.2, 0.5, 0.8];
+            const previewTimestamps = previewRatios.map((ratio) => {
+                const timestamp = safeStart + candidateDuration * ratio;
+                return Number(Math.max(0.1, Math.min(safeTranscriptDuration, timestamp)).toFixed(3));
+            });
+
+            return {
+                start: safeStart,
+                duration: candidateDuration,
+                previewTimestamps,
+            };
         });
     }
 

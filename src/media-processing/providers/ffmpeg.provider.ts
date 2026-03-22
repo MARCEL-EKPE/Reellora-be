@@ -98,7 +98,13 @@ export class FfmpegProvider {
         });
     }
 
-    async cutVideo(inputPath: string, outputPath: string, start: string | number, duration: number): Promise<string> {
+    async cutVideo(
+        inputPath: string,
+        outputPath: string,
+        start: string | number,
+        duration: number,
+        options?: { mute?: boolean }
+    ): Promise<string> {
         return new Promise((resolve, reject) => {
             const cmd = ffmpeg(inputPath);
             if (typeof start === 'number') {
@@ -109,7 +115,11 @@ export class FfmpegProvider {
             } else {
                 cmd.setStartTime(start as string);
             }
+            if (options?.mute) {
+                cmd.noAudio();
+            }
             cmd.setDuration(duration)
+                .outputOptions(['-movflags +faststart'])
                 .output(outputPath)
                 .on('end', () => resolve(outputPath))
                 .on('error', reject)
@@ -161,33 +171,5 @@ export class FfmpegProvider {
         });
     }
 
-    async createVideoFromImage(inputImagePath: string, outputVideoPath: string, duration: number): Promise<string> {
-        const safeDuration = Math.max(1, Number(duration) || 1);
-        const fadeOutStart = Math.max(0, safeDuration - 0.35);
-
-        return new Promise((resolve, reject) => {
-            ffmpeg()
-                .input(inputImagePath)
-                .inputOptions(['-loop 1'])
-                .videoFilters([
-                    'scale=1080:1920:force_original_aspect_ratio=increase',
-                    'crop=1080:1920',
-                    'eq=saturation=1.05:contrast=1.02',
-                    'fade=t=in:st=0:d=0.25',
-                    `fade=t=out:st=${fadeOutStart.toFixed(3)}:d=0.25`,
-                ])
-                .outputOptions([
-                    `-t ${safeDuration.toFixed(3)}`,
-                    '-r 25',
-                    '-pix_fmt yuv420p',
-                    '-an',
-                    '-movflags +faststart',
-                ])
-                .output(outputVideoPath)
-                .on('end', () => resolve(outputVideoPath))
-                .on('error', reject)
-                .run();
-        });
-    }
-
 }
+
