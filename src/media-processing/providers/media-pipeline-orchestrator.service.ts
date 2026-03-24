@@ -11,7 +11,9 @@ import {
     NarrationScene,
     TranscriptSegment,
 } from '../interfaces/narration-scene.interface';
-import { SceneClipCandidate, SceneClipSelection } from './vision-frame-selector.provider';
+import { SceneClipCandidate } from '../interfaces/scene-clip-candidate';
+import { SceneClipSelection } from '../interfaces/scene-clip-selection';
+import { LogoRegionDetection } from '../interfaces/logo-region-detection';
 
 @Injectable()
 export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleDestroy {
@@ -161,6 +163,7 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
         const clipsDir = path.join(sessionDir, 'clips');
         const framesDir = path.join(sessionDir, 'frames');
         const candidateClipsDir = path.join(sessionDir, 'candidate-clips');
+        const cleanedClipsDir = path.join(sessionDir, 'cleaned-clips');
         const mergedPath = path.join(sessionDir, 'merged.mp4');
         const mergedWithTtsPath = path.join(sessionDir, 'merged-tts.mp4');
         const ttsAudioPath = path.join(sessionDir, 'tts-audio.mp3');
@@ -170,6 +173,7 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
         if (!fs.existsSync(clipsDir)) fs.mkdirSync(clipsDir, { recursive: true });
         if (!fs.existsSync(framesDir)) fs.mkdirSync(framesDir, { recursive: true });
         if (!fs.existsSync(candidateClipsDir)) fs.mkdirSync(candidateClipsDir, { recursive: true });
+        if (!fs.existsSync(cleanedClipsDir)) fs.mkdirSync(cleanedClipsDir, { recursive: true });
 
         // 2.1: Extract audio
         this.logger.debug(`[${sessionId}] 2.1 Extracting audio...`);
@@ -317,6 +321,19 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
         const sceneCandidateMap = new Map(sceneCandidates.map(candidate => [candidate.sceneIndex, candidate.clips]));
         const clipSelectionMap = new Map(clipSelections.map(selection => [selection.sceneIndex, selection.bestClipPath]));
 
+        const sourceVideoDuration = await this._executeQueueJob('probe-media-duration', { input: videoPath }, sessionId);
+        const detectedLogoRegion = await this._detectLogoRegion({
+            videoPath,
+            videoDuration: Number(sourceVideoDuration),
+            framesDir,
+            sessionId,
+        });
+        if (detectedLogoRegion) {
+            this.logger.debug(
+                `[${sessionId}] Persistent logo detected at normalized box x=${detectedLogoRegion.x}, y=${detectedLogoRegion.y}, w=${detectedLogoRegion.width}, h=${detectedLogoRegion.height}`
+            );
+        }
+
         // Build the final visual sequence using the vision-selected silent clips (or fallback candidate clip)
         const sceneClipPaths: string[] = [];
         for (const scene of narrationScenes) {
@@ -330,7 +347,23 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
             }
 
             const finalSceneClipPath = path.join(clipsDir, `scene-${scene.index}.mp4`);
-            fs.copyFileSync(chosenClip.path, finalSceneClipPath);
+            if (detectedLogoRegion) {
+                const cleanedClipPath = path.join(cleanedClipsDir, `scene-${scene.index}-clean.mp4`);
+                await this._executeQueueJob(
+                    'sanitize-logo-region',
+                    {
+                        input: chosenClip.path,
+                        output: cleanedClipPath,
+                        logoRegion: detectedLogoRegion,
+                        strategy: 'blur',
+                        replacementLogoPath: undefined,
+                    },
+                    sessionId,
+                );
+                fs.copyFileSync(cleanedClipPath, finalSceneClipPath);
+            } else {
+                fs.copyFileSync(chosenClip.path, finalSceneClipPath);
+            }
             scene.selectedClipPath = finalSceneClipPath;
             sceneClipPaths.push(finalSceneClipPath);
         }
@@ -520,6 +553,44 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
                 previewTimestamps,
             };
         });
+    }
+
+    private async _detectLogoRegion(params: {
+        videoPath: string;
+        videoDuration: number;
+        framesDir: string;
+        sessionId: number;
+    }): Promise<LogoRegionDetection | null> {
+        const { videoPath, videoDuration, framesDir, sessionId } = params;
+        const safeDuration = Number(videoDuration) > 0 ? Number(videoDuration) : 0;
+        if (safeDuration <= 0) {
+            return null;
+        }
+
+        const sampleRatios = [0.1, 0.3, 0.5, 0.7, 0.9];
+        const sampleFramePaths: string[] = [];
+
+        for (let index = 0; index < sampleRatios.length; index++) {
+            const timestampSeconds = Number(Math.max(0.2, Math.min(safeDuration - 0.2, safeDuration * sampleRatios[index])).toFixed(3));
+            const framePath = path.join(framesDir, `logo-sample-${index}.jpg`);
+            await this._executeQueueJob(
+                'extract-frame',
+                { input: videoPath, output: framePath, timestampSeconds },
+                sessionId,
+            );
+            sampleFramePaths.push(framePath);
+        }
+
+        try {
+            return await this._executeQueueJob(
+                'detect-logo-region',
+                { framePaths: sampleFramePaths },
+                sessionId,
+            );
+        } catch (err) {
+            this.logger.warn(`[${sessionId}] Logo detection failed; continuing without delogo cleanup: ${err.message}`);
+            return null;
+        }
     }
 
     private _getTranscriptDuration(transcriptSegments: TranscriptSegment[]): number {

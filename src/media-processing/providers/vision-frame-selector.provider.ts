@@ -3,23 +3,9 @@ import mediaProcessingConfig from '../config/media-processing.config';
 import { type ConfigType } from '@nestjs/config';
 import axios from 'axios';
 import * as fs from 'fs';
-
-export interface SceneClipCandidate {
-    sceneIndex: number;
-    clips: Array<{
-        path: string;
-        start: number;
-        duration: number;
-        previewFrames: Array<{ path: string; timestamp: number }>;
-    }>;
-}
-
-export interface SceneClipSelection {
-    sceneIndex: number;
-    bestClipPath: string;
-    bestStart: number;
-    bestDuration: number;
-}
+import { SceneClipCandidate } from '../interfaces/scene-clip-candidate';
+import { SceneClipSelection } from '../interfaces/scene-clip-selection';
+import { LogoRegionDetection } from '../interfaces/logo-region-detection';
 
 @Injectable()
 export class VisionFrameSelectorProvider {
@@ -118,6 +104,73 @@ export class VisionFrameSelectorProvider {
         }
     }
 
+    async detectPersistentLogoRegion(framePaths: string[]): Promise<LogoRegionDetection | null> {
+        if (!this.config.openAIApiKey) throw new Error('OPENAI_API_KEY is not set');
+        if (!framePaths?.length) return null;
+
+        const content: any[] = [
+            {
+                type: 'text',
+                text:
+                    `You are detecting persistent channel branding overlays in news footage.\n` +
+                    `Branding may include: channel logo icon, channel name text, watermark bug, and static corner/lower-third brand marks.\n` +
+                    `Inspect all provided frames together and find the single consistent branding region if present.\n` +
+                    `Return ONLY valid JSON in this exact shape: {"detected": boolean, "x": number, "y": number, "width": number, "height": number}.\n` +
+                    `If no persistent branding exists, return {"detected": false, "x": 0, "y": 0, "width": 0, "height": 0}.\n` +
+                    `If detected=true, x, y, width, and height must be normalized decimals between 0 and 1 and must cover BOTH logo icon and adjacent channel-name text where present.`,
+            },
+        ];
+
+        for (let index = 0; index < framePaths.length; index++) {
+            const framePath = framePaths[index];
+            try {
+                const base64 = fs.readFileSync(framePath).toString('base64');
+                content.push({ type: 'text', text: `Frame ${index}:` });
+                content.push({
+                    type: 'image_url',
+                    image_url: { url: `data:image/jpeg;base64,${base64}`, detail: 'low' },
+                });
+            } catch {
+                // skip unreadable frames
+            }
+        }
+
+        const messages = [
+            { role: 'system', content: 'You detect persistent logos or watermarks in repeated frame samples.' },
+            { role: 'user', content },
+        ];
+
+        try {
+            const res = await axios.post(
+                `${this.config.openAIApiBase}/v1/chat/completions`,
+                { model: this.config.openAIVisionModel, messages, temperature: 0, max_tokens: 200 },
+                { headers: { Authorization: `Bearer ${this.config.openAIApiKey}` } },
+            );
+
+            const raw: string = res.data?.choices?.[0]?.message?.content ?? '';
+            const parsed = this._parseJsonObject(raw);
+            if (!parsed || parsed.detected !== true) {
+                return null;
+            }
+
+            const x = this._normalizeUnitInterval(parsed.x);
+            const y = this._normalizeUnitInterval(parsed.y);
+            const width = this._normalizeUnitInterval(parsed.width);
+            const height = this._normalizeUnitInterval(parsed.height);
+
+            if (width <= 0 || height <= 0) {
+                return null;
+            }
+
+            return { detected: true, x, y, width, height };
+        } catch (err: any) {
+            const status = err?.response?.status;
+            const data = err?.response?.data;
+            console.warn(`Vision logo detection failed (status ${status}): ${data ? JSON.stringify(data) : err?.message}`);
+            return null;
+        }
+    }
+
     private _parseJsonArray(content: string): any[] | null {
         if (!content) return null;
         try {
@@ -131,5 +184,32 @@ export class VisionFrameSelectorProvider {
             }
             return null;
         }
+    }
+
+    private _parseJsonObject(content: string): any | null {
+        if (!content) return null;
+        try {
+            const parsed = JSON.parse(content);
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+        } catch {
+            const start = content.indexOf('{');
+            const end = content.lastIndexOf('}');
+            if (start >= 0 && end >= 0) {
+                try {
+                    return JSON.parse(content.substring(start, end + 1));
+                } catch {
+                    return null;
+                }
+            }
+            return null;
+        }
+    }
+
+    private _normalizeUnitInterval(value: unknown): number {
+        const numericValue = Number(value);
+        if (!Number.isFinite(numericValue)) {
+            return 0;
+        }
+        return Number(Math.max(0, Math.min(1, numericValue)).toFixed(4));
     }
 }

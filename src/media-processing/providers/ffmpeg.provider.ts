@@ -10,6 +10,18 @@ ffmpeg.setFfprobePath(ffprobeInstaller.path)
 @Injectable()
 export class FfmpegProvider {
 
+    async getMediaDimensions(inputPath: string): Promise<{ width: number; height: number }> {
+        return new Promise((resolve, reject) => {
+            ffmpeg.ffprobe(inputPath, (err, metadata) => {
+                if (err) return reject(err);
+                const videoStream = metadata?.streams?.find((stream) => stream.codec_type === 'video');
+                const width = Number(videoStream?.width ?? 0);
+                const height = Number(videoStream?.height ?? 0);
+                resolve({ width, height });
+            });
+        });
+    }
+
     async getMediaDuration(inputPath: string): Promise<number> {
         return new Promise((resolve, reject) => {
             ffmpeg.ffprobe(inputPath, (err, metadata) => {
@@ -166,6 +178,73 @@ export class FfmpegProvider {
                 .outputOptions(['-vf scale=1920:-2', '-q:v 8'])
                 .output(outputImagePath)
                 .on('end', () => resolve(outputImagePath))
+                .on('error', reject)
+                .run();
+        });
+    }
+
+    async sanitizeLogoRegion(
+        inputVideoPath: string,
+        outputVideoPath: string,
+        logoRegion: { x: number; y: number; width: number; height: number; normalized?: boolean },
+        options?: { strategy?: 'blur' | 'overlay-watermark'; replacementLogoPath?: string }
+    ): Promise<string> {
+        const { width: videoWidth, height: videoHeight } = await this.getMediaDimensions(inputVideoPath);
+        const useNormalized = logoRegion.normalized !== false;
+
+        const x = useNormalized ? Math.round(logoRegion.x * videoWidth) : Math.round(logoRegion.x);
+        const y = useNormalized ? Math.round(logoRegion.y * videoHeight) : Math.round(logoRegion.y);
+        const width = useNormalized ? Math.round(logoRegion.width * videoWidth) : Math.round(logoRegion.width);
+        const height = useNormalized ? Math.round(logoRegion.height * videoHeight) : Math.round(logoRegion.height);
+
+        const padding = 6;
+        const safeX = Math.max(0, Math.min(videoWidth - 1, x - padding));
+        const safeY = Math.max(0, Math.min(videoHeight - 1, y - padding));
+        const safeWidth = Math.max(12, Math.min(videoWidth - safeX, width + padding * 2));
+        const safeHeight = Math.max(12, Math.min(videoHeight - safeY, height + padding * 2));
+        const strategy = options?.strategy ?? 'blur';
+
+        if (strategy === 'overlay-watermark' && options?.replacementLogoPath) {
+            return new Promise((resolve, reject) => {
+                ffmpeg(inputVideoPath)
+                    .input(options.replacementLogoPath)
+                    .complexFilter([
+                        {
+                            filter: 'scale',
+                            options: {
+                                w: safeWidth,
+                                h: safeHeight,
+                            },
+                            inputs: '1:v',
+                            outputs: 'wm',
+                        },
+                        {
+                            filter: 'overlay',
+                            options: {
+                                x: safeX,
+                                y: safeY,
+                            },
+                            inputs: ['0:v', 'wm'],
+                            outputs: 'v',
+                        },
+                    ])
+                    .outputOptions(['-map [v]', '-an', '-movflags +faststart'])
+                    .output(outputVideoPath)
+                    .on('end', () => resolve(outputVideoPath))
+                    .on('error', reject)
+                    .run();
+            });
+        }
+
+        return new Promise((resolve, reject) => {
+            ffmpeg(inputVideoPath)
+                .videoFilters([
+                    `delogo=x=${safeX}:y=${safeY}:w=${safeWidth}:h=${safeHeight}:show=0`,
+                ])
+                .noAudio()
+                .outputOptions(['-movflags +faststart'])
+                .output(outputVideoPath)
+                .on('end', () => resolve(outputVideoPath))
                 .on('error', reject)
                 .run();
         });

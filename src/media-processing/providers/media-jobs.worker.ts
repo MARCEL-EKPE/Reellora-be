@@ -7,6 +7,7 @@ import { NewsSummaryProvider } from "./news-summary.provider";
 import { VisionFrameSelectorProvider } from "./vision-frame-selector.provider";
 import { TextToSpeechProvider } from "./text-to-speech.provider";
 import * as fs from 'fs';
+import { LogoRegionDetection } from "../interfaces/logo-region-detection";
 
 function getErrorMessage(err: unknown): string {
     return err instanceof Error ? err.message : String(err);
@@ -112,6 +113,23 @@ export class MediaJobsWorker extends WorkerHost {
 
             case 'probe-media-duration':
                 return this.ffmpegProvider.getMediaDuration(job.data.input);
+
+            case 'detect-logo-region':
+                return this.visionFrameSelectorProvider.detectPersistentLogoRegion(job.data.framePaths || []);
+
+            case 'sanitize-logo-region':
+                return this.ffmpegProvider.sanitizeLogoRegion(
+                    job.data.input,
+                    job.data.output,
+                    {
+                        ...(job.data.logoRegion as LogoRegionDetection),
+                        normalized: true,
+                    },
+                    {
+                        strategy: job.data.strategy,
+                        replacementLogoPath: job.data.replacementLogoPath,
+                    }
+                );
 
             case 'select-scene-clips': {
                 return this.visionFrameSelectorProvider.selectBestClipsForScenes({
