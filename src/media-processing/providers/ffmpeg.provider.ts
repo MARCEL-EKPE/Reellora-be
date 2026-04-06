@@ -187,9 +187,17 @@ export class FfmpegProvider {
         inputVideoPath: string,
         outputVideoPath: string,
         logoRegion: { x: number; y: number; width: number; height: number; normalized?: boolean },
-        options?: { strategy?: 'blur' | 'overlay-watermark'; replacementLogoPath?: string }
+        replacementLogoPath: string
     ): Promise<string> {
         const { width: videoWidth, height: videoHeight } = await this.getMediaDimensions(inputVideoPath);
+        if (!videoWidth || !videoHeight) {
+            throw new Error(`Unable to probe media dimensions for sanitizeLogoRegion: ${inputVideoPath}`);
+        }
+
+        if (!replacementLogoPath) {
+            throw new Error('sanitizeLogoRegion requires a replacement logo path');
+        }
+
         const useNormalized = logoRegion.normalized !== false;
 
         const x = useNormalized ? Math.round(logoRegion.x * videoWidth) : Math.round(logoRegion.x);
@@ -198,51 +206,68 @@ export class FfmpegProvider {
         const height = useNormalized ? Math.round(logoRegion.height * videoHeight) : Math.round(logoRegion.height);
 
         const padding = 6;
-        const safeX = Math.max(0, Math.min(videoWidth - 1, x - padding));
-        const safeY = Math.max(0, Math.min(videoHeight - 1, y - padding));
-        const safeWidth = Math.max(12, Math.min(videoWidth - safeX, width + padding * 2));
-        const safeHeight = Math.max(12, Math.min(videoHeight - safeY, height + padding * 2));
-        const strategy = options?.strategy ?? 'blur';
 
-        if (strategy === 'overlay-watermark' && options?.replacementLogoPath) {
-            return new Promise((resolve, reject) => {
-                ffmpeg(inputVideoPath)
-                    .input(options.replacementLogoPath)
-                    .complexFilter([
-                        {
-                            filter: 'scale',
-                            options: {
-                                w: safeWidth,
-                                h: safeHeight,
-                            },
-                            inputs: '1:v',
-                            outputs: 'wm',
-                        },
-                        {
-                            filter: 'overlay',
-                            options: {
-                                x: safeX,
-                                y: safeY,
-                            },
-                            inputs: ['0:v', 'wm'],
-                            outputs: 'v',
-                        },
-                    ])
-                    .outputOptions(['-map [v]', '-an', '-movflags +faststart'])
-                    .output(outputVideoPath)
-                    .on('end', () => resolve(outputVideoPath))
-                    .on('error', reject)
-                    .run();
-            });
-        }
+        const unclampedLeft = x - padding;
+        const unclampedTop = y - padding;
+        const unclampedRight = x + width + padding;
+        const unclampedBottom = y + height + padding;
+
+        const safeX = Math.max(0, Math.min(videoWidth - 1, unclampedLeft));
+        const safeY = Math.max(0, Math.min(videoHeight - 1, unclampedTop));
+        const safeRight = Math.max(safeX + 1, Math.min(videoWidth, unclampedRight));
+        const safeBottom = Math.max(safeY + 1, Math.min(videoHeight, unclampedBottom));
+
+        const safeWidth = safeRight - safeX;
+        const safeHeight = safeBottom - safeY;
 
         return new Promise((resolve, reject) => {
             ffmpeg(inputVideoPath)
-                .videoFilters([
-                    `delogo=x=${safeX}:y=${safeY}:w=${safeWidth}:h=${safeHeight}:show=0`,
+                .input(replacementLogoPath)
+                .complexFilter([
+                    {
+                        filter: 'scale',
+                        options: { w: videoWidth, h: videoHeight, force_original_aspect_ratio: 'decrease' },
+                        inputs: '0:v',
+                        outputs: 'scaled',
+                    },
+                    {
+                        filter: 'pad',
+                        options: { w: videoWidth, h: videoHeight, x: '(ow-iw)/2', y: '(oh-ih)/2' },
+                        inputs: 'scaled',
+                        outputs: 'padded',
+                    },
+                    {
+                        filter: 'setsar',
+                        options: '1',
+                        inputs: 'padded',
+                        outputs: 'sared',
+                    },
+                    {
+                        filter: 'fps',
+                        options: '25',
+                        inputs: 'sared',
+                        outputs: 'cfr',
+                    },
+                    {
+                        filter: 'format',
+                        options: 'yuv420p',
+                        inputs: 'cfr',
+                        outputs: 'base',
+                    },
+                    {
+                        filter: 'scale',
+                        options: { w: safeWidth, h: safeHeight },
+                        inputs: '1:v',
+                        outputs: 'wm',
+                    },
+                    {
+                        filter: 'overlay',
+                        options: { x: safeX, y: safeY },
+                        inputs: ['base', 'wm'],
+                        outputs: 'v',
+                    },
                 ])
-                .noAudio()
-                .outputOptions(['-movflags +faststart'])
+                .outputOptions(['-map [v]', '-an', '-movflags +faststart'])
                 .output(outputVideoPath)
                 .on('end', () => resolve(outputVideoPath))
                 .on('error', reject)

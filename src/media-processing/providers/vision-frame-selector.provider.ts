@@ -32,6 +32,8 @@ export class VisionFrameSelectorProvider {
                     `You are matching narration scenes to short silent video clips.\n` +
                     `For each scene you are given a narration sentence and numbered candidate clips. Each clip is represented by three preview frames sampled from that clip.\n` +
                     `Select the clip that best illustrates what is described — prefer clips that visually show the event, action, people, setting, or consequence mentioned in the narration.\n` +
+                    `IMPORTANT: Avoid selecting studio footage with news anchors, presenters at desks, or talking-head segments. These do not illustrate the narrated content.\n` +
+                    `Prioritize on-location footage, event coverage, action sequences, affected locations, and contextual visuals that directly relate to the narration.\n` +
                     `Return ONLY a JSON array with one entry per scene: [{ "sceneIndex": number, "clipIndex": number }]`,
             },
         ];
@@ -112,12 +114,14 @@ export class VisionFrameSelectorProvider {
             {
                 type: 'text',
                 text:
-                    `You are detecting persistent channel branding overlays in news footage.\n` +
-                    `Branding may include: channel logo icon, channel name text, watermark bug, and static corner/lower-third brand marks.\n` +
-                    `Inspect all provided frames together and find the single consistent branding region if present.\n` +
+                    `You are detecting persistent media channel branding overlays (logos, watermarks, badges).\n` +
+                    `Branding includes: channel/network logo icon, channel name text, taglines, watermarks, and corner/lower-third brand marks.\n` +
+                    `Inspect all provided frames together and identify the single consistent branding region if present.\n` +
+                    `CRITICAL: Prioritize finding the icon/emblem/badge as the anchor point. Then expand the bounding box to fully include ANY text, taglines, or supporting marks that belong to the same branding block.\n` +
+                    `For stacked layouts (icon above/below text), the box must cover both top and bottom completely. For side-by-side layouts, the box must cover left to right completely.\n` +
                     `Return ONLY valid JSON in this exact shape: {"detected": boolean, "x": number, "y": number, "width": number, "height": number}.\n` +
                     `If no persistent branding exists, return {"detected": false, "x": 0, "y": 0, "width": 0, "height": 0}.\n` +
-                    `If detected=true, x, y, width, and height must be normalized decimals between 0 and 1 and must cover BOTH logo icon and adjacent channel-name text where present.`,
+                    `If detected=true, x, y, width, and height must be normalized decimals between 0 and 1 representing a minimal single bounding rectangle that fully encloses the entire branding block.`,
             },
         ];
 

@@ -355,8 +355,7 @@ export class MediaPipelineOrchestratorService implements OnModuleInit, OnModuleD
                         input: chosenClip.path,
                         output: cleanedClipPath,
                         logoRegion: detectedLogoRegion,
-                        strategy: 'blur',
-                        replacementLogoPath: undefined,
+                        replacementLogoPath: logo,
                     },
                     sessionId,
                 );

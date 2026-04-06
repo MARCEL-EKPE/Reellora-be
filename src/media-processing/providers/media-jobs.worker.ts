@@ -125,10 +125,7 @@ export class MediaJobsWorker extends WorkerHost {
                         ...(job.data.logoRegion as LogoRegionDetection),
                         normalized: true,
                     },
-                    {
-                        strategy: job.data.strategy,
-                        replacementLogoPath: job.data.replacementLogoPath,
-                    }
+                    job.data.replacementLogoPath,
                 );
 
             case 'select-scene-clips': {
