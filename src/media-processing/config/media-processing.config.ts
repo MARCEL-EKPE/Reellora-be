@@ -1,4 +1,5 @@
 import { registerAs } from "@nestjs/config";
+import * as path from 'path';
 
 export default registerAs('media-processingConfig', () => ({
     openAIApiKey: process.env.OPENAI_API_KEY,
@@ -9,4 +10,14 @@ export default registerAs('media-processingConfig', () => ({
     shutterstockApiBase: process.env.SHUTTERSTOCK_API_BASE_URL || 'https://api.shutterstock.com',
     shutterstockClientId: process.env.SHUTTERSTOCK_CLIENT_ID,
     shutterstockClientSecret: process.env.SHUTTERSTOCK_CLIENT_SECRET,
+    logoDetectionRequestStream: process.env.LOGO_REQUEST_STREAM || 'logo.detect.requested',
+    logoDetectionResultStream: process.env.LOGO_RESULT_STREAM || 'logo.detect.results',
+    logoDetectionTimeoutMs: Number(process.env.LOGO_DETECTION_TIMEOUT_MS || 180000),
+    logoDetectionConf: Number(process.env.LOGO_DETECTION_CONF || 0.25),
+    logoDetectionIou: Number(process.env.LOGO_DETECTION_IOU || 0.45),
+    logoDetectionMinSegmentFrames: Number(process.env.LOGO_DETECTION_MIN_SEGMENT_FRAMES || 5),
+    logoDetectionMaxFrameGap: Number(process.env.LOGO_DETECTION_MAX_FRAME_GAP || 3),
+    logoDetectionContinuityIou: Number(process.env.LOGO_DETECTION_CONTINUITY_IOU || 0.3),
+    logoDetectionWeights: process.env.LOGO_DETECTION_WEIGHTS,
+    logoDetectionMaxFrames: process.env.LOGO_DETECTION_MAX_FRAMES ? Number(process.env.LOGO_DETECTION_MAX_FRAMES) : undefined,
 }))

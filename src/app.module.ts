@@ -21,7 +21,7 @@ import { MediaProcessingModule } from './media-processing/media-processing.modul
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppMcpModule } from './mcp/mcp.module';
-import { MediaScrapperModule } from './media-scrapper/media-scrapper.module';
+import { ContentIngestionModule } from './content-ingestion/content-ingestion.module';
 import { RedisModule } from './common/redis/redis.module';
 
 @Module({
@@ -60,7 +60,7 @@ import { RedisModule } from './common/redis/redis.module';
     }),
     ScheduleModule.forRoot(),
     AppMcpModule,
-    MediaScrapperModule
+    ContentIngestionModule
   ],
   controllers: [AppController],
   providers: [AppService,
