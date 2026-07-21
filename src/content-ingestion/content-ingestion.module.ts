@@ -2,15 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ContentIngestionService } from './providers/content-ingestion.service';
 import {
-    ContentSourceFetcher,
     ContentSourceIngestionProvider,
+    RssContentSourceFetcher,
 } from './providers/content-source-ingestion.provider';
-
-class DefaultContentSourceFetcher implements ContentSourceFetcher {
-    async fetch() {
-        return [];
-    }
-}
 
 @Module({
     imports: [ConfigModule],
@@ -19,7 +13,7 @@ class DefaultContentSourceFetcher implements ContentSourceFetcher {
         ContentSourceIngestionProvider,
         {
             provide: 'CONTENT_SOURCE_FETCHER',
-            useClass: DefaultContentSourceFetcher,
+            useClass: RssContentSourceFetcher,
         },
     ],
     exports: [ContentIngestionService],
