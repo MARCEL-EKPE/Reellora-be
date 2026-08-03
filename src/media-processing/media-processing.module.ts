@@ -5,10 +5,12 @@ import { TextToSpeechProvider } from './providers/text-to-speech.provider';
 import { ContentScriptGeneratorProvider } from './providers/content-script-generator.provider';
 import { ContentAssemblyProvider } from './providers/content-assembly.provider';
 import { ContentPipelineOrchestratorService } from './providers/content-pipeline-orchestrator.service';
+import { ContentIngestionModule } from '../content-ingestion/content-ingestion.module';
 
 @Module({
   imports: [
     ConfigModule.forFeature(mediaProcessingConfig),
+    ContentIngestionModule,
   ],
   providers: [
     ContentPipelineOrchestratorService,
