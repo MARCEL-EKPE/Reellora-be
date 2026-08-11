@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ContentPipelineRequest, ContentPipelineResult } from '../interfaces/content-pipeline.interface';
 import { ContentScriptGeneratorProvider } from './content-script-generator.provider';
+import { ContentIntelligenceProvider } from './content-intelligence.provider';
 import { ContentAssemblyProvider } from './content-assembly.provider';
 import { TextToSpeechProvider } from './text-to-speech.provider';
 import { ContentIngestionService } from '../../content-ingestion/providers/content-ingestion.service';
@@ -12,6 +13,7 @@ export class ContentPipelineOrchestratorService implements OnModuleInit {
     private readonly logger = new Logger(ContentPipelineOrchestratorService.name);
 
     constructor(
+        private readonly contentIntelligenceProvider: ContentIntelligenceProvider,
         private readonly scriptGeneratorProvider: ContentScriptGeneratorProvider,
         private readonly textToSpeechProvider: TextToSpeechProvider,
         private readonly contentAssemblyProvider: ContentAssemblyProvider,
@@ -52,7 +54,10 @@ export class ContentPipelineOrchestratorService implements OnModuleInit {
             fs.mkdirSync(outputDir, { recursive: true });
         }
 
-        const script = await this.scriptGeneratorProvider.generateScript(request);
+        const sourceItems = request.sourceItems ?? (await this.contentIngestionService.discoverFeeds());
+        const brief = await this.contentIntelligenceProvider.buildBrief(sourceItems, request.topic);
+        const script = await this.scriptGeneratorProvider.generateScript(brief);
+
         const transcriptPath = path.join(outputDir, 'script.txt');
         const audioPath = path.join(outputDir, 'narration.mp3');
         const videoPath = path.join(outputDir, 'final-video.mp4');
@@ -70,11 +75,11 @@ export class ContentPipelineOrchestratorService implements OnModuleInit {
         const assembledVideoPath = await this.contentAssemblyProvider.assembleNarrationVideo({
             outputPath: videoPath,
             audioPath: speechResult.audioPath,
-            titleText: request.topic,
+            titleText: brief.topic,
             script,
         });
 
-        this.logger.log(`Content pipeline completed for ${request.topic}`);
+        this.logger.log(`Content pipeline completed for ${brief.topic}`);
 
         return {
             script,

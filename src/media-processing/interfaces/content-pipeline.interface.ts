@@ -1,8 +1,11 @@
 import { TextToSpeechModel, TextToSpeechVoice } from '../enums/text-to-speech.enum';
+import { ContentSourceItem } from '../../content-ingestion/interfaces/content-source.interface';
 
 export interface ContentPipelineRequest {
-    topic: string;
-    sourceText: string;
+    /** Optional hint to steer which ingested story the intelligence layer selects. */
+    topic?: string;
+    /** Optional pre-fetched items, useful for tests or bypassing live ingestion. */
+    sourceItems?: ContentSourceItem[];
     outputDir: string;
     voice?: TextToSpeechVoice;
     model?: TextToSpeechModel;
