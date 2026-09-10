@@ -20,9 +20,35 @@ class FakeContentSourceFetcher implements ContentSourceFetcher {
     }
 }
 
+const mockSourcesConfig = {
+    sources: [
+        {
+            id: 'reuters-africa',
+            name: 'Reuters Africa',
+            url: 'https://reutersbest.com/region/africa/feed/',
+            type: 'rss',
+            category: 'news',
+            region: 'africa',
+            enabled: true,
+        },
+        {
+            id: 'businessday-nigeria',
+            name: 'BusinessDay Nigeria',
+            url: 'https://businessday.ng/feed/',
+            type: 'rss',
+            category: 'news',
+            region: 'nigeria',
+            enabled: true,
+        },
+    ] as ContentSourceDefinition[],
+};
+
 describe('ContentSourceIngestionProvider', () => {
-    it('includes the recommended African business news sources', () => {
-        const provider = new ContentSourceIngestionProvider(new FakeContentSourceFetcher());
+    it('reads configured content sources from config', () => {
+        const provider = new ContentSourceIngestionProvider(
+            new FakeContentSourceFetcher(),
+            mockSourcesConfig as never,
+        );
 
         const configuredSources = provider.getConfiguredSources();
         const sourceIds = configuredSources.map((source) => source.id);
@@ -30,14 +56,14 @@ describe('ContentSourceIngestionProvider', () => {
         expect(sourceIds).toEqual(expect.arrayContaining([
             'reuters-africa',
             'businessday-nigeria',
-            'afdb-news',
-            'imf-africa-data',
-            'world-bank-africa-data',
         ]));
     });
 
     it('normalizes items from configured content sources', async () => {
-        const provider = new ContentSourceIngestionProvider(new FakeContentSourceFetcher());
+        const provider = new ContentSourceIngestionProvider(
+            new FakeContentSourceFetcher(),
+            mockSourcesConfig as never,
+        );
 
         const items = await provider.ingestSources();
 
