@@ -23,9 +23,29 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AppMcpModule } from './mcp/mcp.module';
 import { ContentIngestionModule } from './content-ingestion/content-ingestion.module';
 import { RedisModule } from './common/redis/redis.module';
+import { PipelineCoreModule } from './pipeline-core/pipeline-core.module';
+import { PipelineQueuesModule } from './pipeline-queues/pipeline-queues.module';
+import { ResearchModule } from './research/research.module';
+import { ScriptModule } from './script/script.module';
+import { VideoPlanningModule } from './video-planning/video-planning.module';
+import { VideoGenerationModule } from './video-generation/video-generation.module';
+import { AssetsModule } from './assets/assets.module';
+import { QualityControlModule } from './quality-control/quality-control.module';
+import { PublishingModule } from './publishing/publishing.module';
 
 @Module({
-  imports: [UsersModule, SocialAccountsModule, AuthModule, MediaProcessingModule, ConfigModule.forRoot({
+  imports: [UsersModule, SocialAccountsModule, AuthModule, MediaProcessingModule,
+    PipelineCoreModule,
+    PipelineQueuesModule,
+    ContentIngestionModule,
+    ResearchModule,
+    ScriptModule,
+    VideoPlanningModule,
+    VideoGenerationModule,
+    AssetsModule,
+    QualityControlModule,
+    PublishingModule,
+    ConfigModule.forRoot({
     isGlobal: true,
     load: [databaseConfig, appConfig],
     validationSchema: envValidation
