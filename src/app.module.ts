@@ -32,9 +32,11 @@ import { VideoGenerationModule } from './video-generation/video-generation.modul
 import { AssetsModule } from './assets/assets.module';
 import { QualityControlModule } from './quality-control/quality-control.module';
 import { PublishingModule } from './publishing/publishing.module';
+import { OpenAiModule } from './openai/openai.module';
 
 @Module({
   imports: [UsersModule, SocialAccountsModule, AuthModule, MediaProcessingModule,
+    OpenAiModule,
     PipelineCoreModule,
     PipelineQueuesModule,
     ContentIngestionModule,

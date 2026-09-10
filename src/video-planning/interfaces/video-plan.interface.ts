@@ -10,7 +10,7 @@ export interface TransitionDescription {
 }
 
 export interface VideoScene {
-  id: string;
+  id?: string;
   order: number;
   narration?: string;
   durationSeconds?: number;

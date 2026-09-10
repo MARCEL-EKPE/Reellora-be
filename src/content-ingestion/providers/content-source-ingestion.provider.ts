@@ -1,10 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import type { ConfigType } from '@nestjs/config';
 import Parser from 'rss-parser';
 import type {
     ContentSourceDefinition,
     ContentSourceFetcher,
     ContentSourceItem,
 } from '../interfaces/content-source.interface';
+import contentSourcesConfig from '../config/content-sources.config';
 
 @Injectable()
 export class RssContentSourceFetcher implements ContentSourceFetcher {
@@ -37,62 +39,12 @@ export class ContentSourceIngestionProvider {
     constructor(
         @Inject('CONTENT_SOURCE_FETCHER')
         private readonly fetcher: ContentSourceFetcher,
+        @Inject(contentSourcesConfig.KEY)
+        private readonly config: ConfigType<typeof contentSourcesConfig>,
     ) { }
 
     getConfiguredSources(): ContentSourceDefinition[] {
-        const sources: ContentSourceDefinition[] = [
-            {
-                id: 'reuters-africa',
-                name: 'Reuters Africa',
-                url: 'https://reutersbest.com/region/africa/feed/',
-                type: 'rss',
-                category: 'news',
-                region: 'africa',
-                enabled: true,
-                description: 'Fast breaking African and business news wire coverage (via reutersbest.com aggregator).',
-            },
-            {
-                id: 'businessday-nigeria',
-                name: 'BusinessDay Nigeria',
-                url: 'https://businessday.ng/feed/',
-                type: 'rss',
-                category: 'news',
-                region: 'nigeria',
-                enabled: true,
-                description: 'Strong Nigerian corporate, policy, market, and economy reporting.',
-            },
-            {
-                id: 'afdb-news',
-                name: 'African Development Bank News',
-                url: 'https://www.afdb.org/en/news-and-events',
-                type: 'rss',
-                category: 'reports',
-                region: 'africa',
-                enabled: true,
-                description: 'Development finance, infrastructure, and policy updates.',
-            },
-            {
-                id: 'imf-africa-data',
-                name: 'IMF Africa Data',
-                url: 'https://www.imf.org/en/rss',
-                type: 'rss',
-                category: 'data',
-                region: 'africa',
-                enabled: true,
-                description: 'Macroeconomic analysis and regional policy updates.',
-            },
-            {
-                id: 'world-bank-africa-data',
-                name: 'World Bank Africa Data',
-                url: 'https://www.worldbank.org/en/news/all',
-                type: 'rss',
-                category: 'data',
-                region: 'africa',
-                enabled: true,
-                description: 'Development and regional economic data updates.',
-            },
-        ];
-        return sources.filter((source) => source.enabled !== false);
+        return this.config.sources.filter((source) => source.enabled !== false);
     }
 
     async ingestSources(): Promise<ContentSourceItem[]> {
