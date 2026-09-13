@@ -49,6 +49,7 @@ import { OpenAiModule } from './openai/openai.module';
     PublishingModule,
     ConfigModule.forRoot({
     isGlobal: true,
+    envFilePath: ['.env', '../../.env'],
     load: [databaseConfig, appConfig],
     validationSchema: envValidation
   }),
@@ -73,8 +74,8 @@ import { OpenAiModule } from './openai/openai.module';
     JwtModule.registerAsync(jwtConfig.asProvider()),
     BullModule.forRoot({
       connection: {
-        host: 'localhost',
-        port: 6379,
+        host: process.env.REDIS_HOST ?? 'localhost',
+        port: Number(process.env.REDIS_PORT ?? 6379),
       },
       defaultJobOptions: {
         attempts: 3,

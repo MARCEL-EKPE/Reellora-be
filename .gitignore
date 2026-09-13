@@ -1,7 +1,15 @@
 # compiled output
 /dist
+/apps/api/dist
+/apps/api/coverage
 /node_modules
 /build
+/apps/web/.output
+/apps/web/.data
+/apps/web/.nuxt
+/apps/web/.nitro
+/apps/web/.cache
+/apps/web/dist
 
 # Logs
 logs

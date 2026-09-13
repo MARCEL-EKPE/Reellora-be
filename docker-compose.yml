@@ -1,8 +1,7 @@
-
 services:
   db:
     image: postgres:16
-    container_name: reellora-be-postgres
+    container_name: reellora-postgres
     restart: always
     environment:
       POSTGRES_USER: ${DB_USERNAME}
@@ -13,13 +12,13 @@ services:
     ports:
       - "${DB_PORT}:${DB_PORT}"
     networks:
-      - reellora-be-net
+      - reellora-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
       interval: 10s
       timeout: 5s
       retries: 3
- 
+
   redis:
     image: redis:7
     container_name: reellora-redis
@@ -27,18 +26,22 @@ services:
     ports:
       - "${REDIS_PORT}:${REDIS_PORT}"
     networks:
-      - reellora-be-net
+      - reellora-net
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
 
-  app:
+  api:
+    image: reellora-api-monorepo:local
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: reellora-be-app
+    container_name: reellora-api
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
       PORT: ${PORT}
       DB_HOST: db
@@ -46,20 +49,23 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DATABASE: ${DB_DATABASE}
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT}
     ports:
       - "${PORT}:${PORT}"
     depends_on:
-      - db
-    volumes:
-      - ./src:/app/src
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
-      - reellora-be-net
+      - reellora-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${PORT}/healthcheck"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT}/healthcheck"]
       interval: 10s
       timeout: 5s
       retries: 3
 
 networks:
-  reellora-be-net:
+  reellora-net:
     driver: bridge
