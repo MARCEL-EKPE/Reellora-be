@@ -90,15 +90,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           <social-facebook-login />
         </div>
 
-        <UButton
-          color="error"
-          variant="soft"
-          label="Link YouTube"
-          icon="i-simple-icons:youtube"
-          block
-          class="mt-2"
-          @click="navigateTo('/youtube/callback')"
-        />
+        <social-youtube-link class="mt-2" />
       </div>
     </UCard>
 

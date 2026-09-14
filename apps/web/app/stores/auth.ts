@@ -1,5 +1,3 @@
-import type { Niche } from '~/enums/niche.enum';
-
 interface SignInResponse {
   apiVersion: string;
   data: {
@@ -17,6 +15,18 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!accessToken.value);
 
+  function applySession(response: SignInResponse) {
+    accessToken.value = response.data.accessToken;
+    refreshToken.value = response.data.refreshToken;
+
+    const payload = JSON.parse(atob(response.data.accessToken.split('.')[1]));
+    user.value = {
+      id: payload.sub,
+      email: payload.email,
+      role: payload.role,
+    };
+  }
+
   async function signIn(email: string, password: string) {
     const config = useRuntimeConfig();
     pending.value = true;
@@ -28,16 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
         body: { email, password },
       });
 
-      accessToken.value = response.data.accessToken;
-      refreshToken.value = response.data.refreshToken;
-
-      const payload = JSON.parse(atob(response.data.accessToken.split('.')[1]));
-      user.value = {
-        id: payload.sub,
-        email: payload.email,
-        role: payload.role,
-      };
-
+      applySession(response);
       return true;
     } catch (err: any) {
       error.value = err?.data?.message || 'Sign-in failed. Please check your credentials.';
@@ -47,17 +48,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function signInWithToken(token: string) {
+  async function signInWithToken(provider: 'google' | 'facebook', token: string) {
     const config = useRuntimeConfig();
     pending.value = true;
     error.value = null;
 
     try {
-      await $fetch(`${config.public.apiBase}/facebook-authentication`, {
+      const response = await $fetch<SignInResponse>(`${config.public.apiBase}/${provider}-authentication`, {
         method: 'POST',
         body: { token },
       });
 
+      applySession(response);
       return true;
     } catch (err: any) {
       error.value = err?.data?.message || 'Social login failed.';

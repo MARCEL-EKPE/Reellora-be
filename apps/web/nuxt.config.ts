@@ -12,10 +12,15 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@pinia/nuxt',
     'nuxt-vue3-google-signin',
-    '@nuxt/icon',
   ],
 
   css: ['~/assets/css/main.css'],
+
+  icon: {
+    clientBundle: {
+      scan: true,
+    },
+  },
 
   colorMode: {
     preference: 'light',

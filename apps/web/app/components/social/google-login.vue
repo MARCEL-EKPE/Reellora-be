@@ -16,7 +16,7 @@ const auth = useAuthStore();
 async function ggLoginSuccess(response: CredentialResponse) {
   const { credential } = response;
   if (credential) {
-    await auth.signInWithToken(credential);
+    await auth.signInWithToken('google', credential);
   }
 }
 
