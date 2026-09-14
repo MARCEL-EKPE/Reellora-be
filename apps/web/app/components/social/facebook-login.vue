@@ -19,7 +19,9 @@
 
 <script setup lang="ts">
 import { useFetch } from "#app";
-import { HFaceBookLogin } from "@healerlab/vue3-facebook-login";
+import FacebookLoginPkg from "@healerlab/vue3-facebook-login";
+
+const { HFaceBookLogin } = FacebookLoginPkg as any;
 
 
 const fbLoginSuccess = async (response: any) => {
