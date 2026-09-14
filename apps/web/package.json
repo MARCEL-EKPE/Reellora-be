@@ -11,17 +11,21 @@
   },
   "dependencies": {
     "@healerlab/vue3-facebook-login": "^0.1.7",
+    "@iconify-json/lucide": "^1.2.132",
+    "@iconify-json/simple-icons": "^1.2.96",
     "@nuxt/icon": "^2.0.0",
-    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@nuxt/ui": "^4.11.1",
+    "@pinia/nuxt": "^1.0.2",
     "nuxt": "^4.1.3",
     "nuxt-vue3-google-signin": "^0.0.13",
+    "pinia": "^4.0.3",
+    "tailwindcss": "^4.3.3",
     "vue": "^3.5.22",
     "vue-router": "^4.5.1",
-    "vue3-google-signin": "^2.1.1"
+    "vue3-google-signin": "^2.1.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^24.7.2",
-    "sass-embedded": "^1.93.2",
-    "shadcn-nuxt": "^2.3.3"
+    "@types/node": "^24.7.2"
   }
 }

@@ -1,30 +1,26 @@
 <template>
-    <GoogleSignInButton
+  <GoogleSignInButton
     @success="ggLoginSuccess"
     @error="ggLoginError"
     size="large"
     width="240"
     text="continue_with"
-    />
+  />
 </template>
 
 <script setup lang="ts">
-import { useFetch , useNuxtApp } from "#app";
-import { GoogleSignInButton, type CredentialResponse } from "vue3-google-signin";
+import { GoogleSignInButton, type CredentialResponse } from 'vue3-google-signin';
 
-const ggLoginSuccess = async (response: CredentialResponse) => {
+const auth = useAuthStore();
+
+async function ggLoginSuccess(response: CredentialResponse) {
   const { credential } = response;
-  try {
-    await $fetch("http://localhost:3000/google-authentication", {
-      method: "POST",
-      body: { token: credential },
-    });
-  } catch (err) {
-    console.error("Request failed:", err);
+  if (credential) {
+    await auth.signInWithToken(credential);
   }
-};
+}
 
-const ggLoginError = () => {
-  console.error("Login failed");
-};
+function ggLoginError() {
+  console.error('Google login failed');
+}
 </script>

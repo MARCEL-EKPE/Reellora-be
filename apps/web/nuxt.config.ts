@@ -9,22 +9,19 @@ export default defineNuxtConfig({
   },
 
   modules: [
+    '@nuxt/ui',
+    '@pinia/nuxt',
     'nuxt-vue3-google-signin',
-    '@nuxtjs/tailwindcss',
-    '@nuxt/icon', 'shadcn-nuxt'],
-  shadcn: {
-    /**
-     * Prefix for all the imported component
-     */
-    prefix: '',
-    /**
-     * Directory that the component lives in.
-     * @default "./components/ui"
-     */
-    componentDir: './components/ui'
+    '@nuxt/icon',
+  ],
+
+  css: ['~/assets/css/main.css'],
+
+  colorMode: {
+    preference: 'light',
   },
 
   googleSignIn: {
-    clientId: '684474965587-1cuvtv4lhd2p8a7hmo4o7k7qlg42nhvq.apps.googleusercontent.com',
-  }
+    clientId: process.env.GOOGLE_CLIENT_ID ?? '684474965587-1cuvtv4lhd2p8a7hmo4o7k7qlg42nhvq.apps.googleusercontent.com',
+  },
 })
