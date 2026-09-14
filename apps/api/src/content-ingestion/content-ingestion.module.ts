@@ -7,25 +7,25 @@ import contentSourcesConfig from './config/content-sources.config';
 import { ContentIngestionService } from './providers/content-ingestion.service';
 import { ArticleIngestionService } from './providers/article-ingestion.service';
 import {
-    ContentSourceIngestionProvider,
-    RssContentSourceFetcher,
+  ContentSourceIngestionProvider,
+  RssContentSourceFetcher,
 } from './providers/content-source-ingestion.provider';
 
 @Module({
-    imports: [
-        ConfigModule.forFeature(contentIngestionConfig),
-        ConfigModule.forFeature(contentSourcesConfig),
-        PipelineCoreModule,
-    ],
-    providers: [
-        ContentIngestionService,
-        ArticleIngestionService,
-        ContentSourceIngestionProvider,
-        {
-            provide: 'CONTENT_SOURCE_FETCHER',
-            useClass: RssContentSourceFetcher,
-        },
-    ],
-    exports: [ContentIngestionService, ArticleIngestionService],
+  imports: [
+    ConfigModule.forFeature(contentIngestionConfig),
+    ConfigModule.forFeature(contentSourcesConfig),
+    PipelineCoreModule,
+  ],
+  providers: [
+    ContentIngestionService,
+    ArticleIngestionService,
+    ContentSourceIngestionProvider,
+    {
+      provide: 'CONTENT_SOURCE_FETCHER',
+      useClass: RssContentSourceFetcher,
+    },
+  ],
+  exports: [ContentIngestionService, ArticleIngestionService],
 })
-export class ContentIngestionModule { }
+export class ContentIngestionModule {}

@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, Logger, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  Logger,
+  Inject,
+} from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import {
   type VideoGenerator,
@@ -17,7 +22,9 @@ export class RunwayVideoGeneratorProvider implements VideoGenerator {
     private readonly config: ConfigType<typeof videoGenerationConfig>,
   ) {}
 
-  async generate(request: VideoGenerationRequest): Promise<VideoGenerationResult> {
+  async generate(
+    request: VideoGenerationRequest,
+  ): Promise<VideoGenerationResult> {
     if (this.config.useMockVideoGeneration) {
       return this.getMockResult(request.sceneId);
     }

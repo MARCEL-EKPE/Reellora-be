@@ -7,24 +7,22 @@ import { error } from 'console';
 
 @Injectable()
 export class CreateFacebookUserProvider {
+  constructor(
+    /**
+     * Injecting usersRepository
+     */
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+  ) {}
 
-    constructor(
-        /**
-         * Injecting usersRepository
-         */
-        @InjectRepository(User)
-        private readonly usersRepository: Repository<User>
-    ) { }
+  public async createFacebookUser(faceBookUser: FacebookUser) {
+    try {
+      const user = this.usersRepository.create(faceBookUser);
+      return await this.usersRepository.save(user);
+    } catch (error) {}
 
-    public async createFacebookUser(faceBookUser: FacebookUser) {
-
-        try {
-            const user = this.usersRepository.create(faceBookUser);
-            return await this.usersRepository.save(user)
-
-        } catch (error) { }
-
-        throw new ConflictException(error, { description: 'Could not create user' })
-    }
-
+    throw new ConflictException(error, {
+      description: 'Could not create user',
+    });
+  }
 }

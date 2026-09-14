@@ -7,11 +7,11 @@ import qualityControlConfig from './config/quality-control.config';
 import { QualityControlProvider } from './providers/quality-control.provider';
 
 @Module({
-    imports: [
-        ConfigModule.forFeature(qualityControlConfig),
-        TypeOrmModule.forFeature([QualityCheck, Video]),
-    ],
-    providers: [QualityControlProvider],
-    exports: [QualityControlProvider],
+  imports: [
+    ConfigModule.forFeature(qualityControlConfig),
+    TypeOrmModule.forFeature([QualityCheck, Video]),
+  ],
+  providers: [QualityControlProvider],
+  exports: [QualityControlProvider],
 })
 export class QualityControlModule {}

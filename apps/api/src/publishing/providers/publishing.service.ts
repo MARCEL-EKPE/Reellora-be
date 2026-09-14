@@ -20,11 +20,15 @@ export class PublishingService {
 
   publish(platform: Platform, request: PublishRequest): Promise<PublishResult> {
     const provider = this.publishers.find(
-      (publisher) => publisher.platform === (this.config.provider === 'mock' ? 'mock' : platform),
+      (publisher) =>
+        publisher.platform ===
+        (this.config.provider === 'mock' ? 'mock' : platform),
     );
 
     if (!provider) {
-      throw new BadRequestException(`Publisher not configured for platform: ${platform}`);
+      throw new BadRequestException(
+        `Publisher not configured for platform: ${platform}`,
+      );
     }
 
     return provider.publish(request);

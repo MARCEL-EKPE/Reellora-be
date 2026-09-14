@@ -1,4 +1,4 @@
 export enum GenerationProvider {
-    RUNWAY = 'runway',
-    MOCK = 'mock',
+  RUNWAY = 'runway',
+  MOCK = 'mock',
 }

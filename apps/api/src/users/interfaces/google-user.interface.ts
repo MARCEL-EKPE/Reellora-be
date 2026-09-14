@@ -1,6 +1,6 @@
 export class GoogleUser {
-    email: string;
-    userName: string;
-    googleId: string;
-    picture: string
+  email: string;
+  userName: string;
+  googleId: string;
+  picture: string;
 }

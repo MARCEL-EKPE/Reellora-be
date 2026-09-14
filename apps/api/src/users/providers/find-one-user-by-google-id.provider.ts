@@ -5,16 +5,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class FindOneUserByGoogleIdProvider {
+  constructor(
+    /**
+     * Injecting Users Repository
+     */
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+  ) {}
 
-    constructor(
-        /**
-         * Injecting Users Repository
-         */
-        @InjectRepository(User)
-        private readonly usersRepository: Repository<User>,
-    ) { }
-
-    public async findOneUserByGoogleId(googleId: string) {
-        return await this.usersRepository.findOneBy({ googleId })
-    }
+  public async findOneUserByGoogleId(googleId: string) {
+    return await this.usersRepository.findOneBy({ googleId });
+  }
 }

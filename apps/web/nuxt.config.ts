@@ -8,9 +8,9 @@ export default defineNuxtConfig({
   },
 
   modules: [
+    '@clerk/nuxt',
     '@nuxt/ui',
     '@pinia/nuxt',
-    'nuxt-vue3-google-signin',
   ],
 
   css: ['~/assets/css/main.css'],
@@ -23,9 +23,5 @@ export default defineNuxtConfig({
 
   colorMode: {
     preference: 'light',
-  },
-
-  googleSignIn: {
-    clientId: process.env.GOOGLE_CLIENT_ID ?? '684474965587-1cuvtv4lhd2p8a7hmo4o7k7qlg42nhvq.apps.googleusercontent.com',
   },
 })

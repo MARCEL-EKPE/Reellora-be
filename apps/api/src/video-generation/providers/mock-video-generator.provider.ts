@@ -8,7 +8,9 @@ import {
 
 @Injectable()
 export class MockVideoGeneratorProvider implements VideoGenerator {
-  async generate(request: VideoGenerationRequest): Promise<VideoGenerationResult> {
+  async generate(
+    request: VideoGenerationRequest,
+  ): Promise<VideoGenerationResult> {
     return {
       providerTaskId: `mock-${request.sceneId}`,
       status: 'completed',

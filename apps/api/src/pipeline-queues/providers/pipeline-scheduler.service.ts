@@ -10,42 +10,42 @@ import { PipelineOrchestratorService } from './pipeline-orchestrator.service';
 
 @Injectable()
 export class PipelineSchedulerService {
-    private readonly logger = new Logger(PipelineSchedulerService.name);
+  private readonly logger = new Logger(PipelineSchedulerService.name);
 
-    constructor(
-        private readonly contentIngestionService: ContentIngestionService,
-        private readonly articleIngestionService: ArticleIngestionService,
-        private readonly orchestrator: PipelineOrchestratorService,
-        @InjectRepository(Video)
-        private readonly videoRepository: Repository<Video>,
-    ) { }
+  constructor(
+    private readonly contentIngestionService: ContentIngestionService,
+    private readonly articleIngestionService: ArticleIngestionService,
+    private readonly orchestrator: PipelineOrchestratorService,
+    @InjectRepository(Video)
+    private readonly videoRepository: Repository<Video>,
+  ) {}
 
-    @Cron(CronExpression.EVERY_HOUR)
-    async discoverAndStartPipeline(): Promise<void> {
-        this.logger.log('Scheduled feed discovery started');
+  @Cron(CronExpression.EVERY_HOUR)
+  async discoverAndStartPipeline(): Promise<void> {
+    this.logger.log('Scheduled feed discovery started');
 
-        try {
-            const items = await this.contentIngestionService.discoverFeeds();
-            const articles = await this.articleIngestionService.ingestArticles(items);
+    try {
+      const items = await this.contentIngestionService.discoverFeeds();
+      const articles = await this.articleIngestionService.ingestArticles(items);
 
-            for (const article of articles.slice(0, 5)) {
-                const existingVideo = await this.videoRepository.findOne({
-                    where: { article: { id: article.id } },
-                });
-                if (existingVideo) {
-                    continue;
-                }
-
-                const video = this.videoRepository.create({
-                    status: VideoStatus.DISCOVERED,
-                    title: article.title,
-                    article,
-                });
-                const saved = await this.videoRepository.save(video);
-                await this.orchestrator.startPipeline(saved.id);
-            }
-        } catch (error) {
-            this.logger.error('Scheduled pipeline discovery failed', error);
+      for (const article of articles.slice(0, 5)) {
+        const existingVideo = await this.videoRepository.findOne({
+          where: { article: { id: article.id } },
+        });
+        if (existingVideo) {
+          continue;
         }
+
+        const video = this.videoRepository.create({
+          status: VideoStatus.DISCOVERED,
+          title: article.title,
+          article,
+        });
+        const saved = await this.videoRepository.save(video);
+        await this.orchestrator.startPipeline(saved.id);
+      }
+    } catch (error) {
+      this.logger.error('Scheduled pipeline discovery failed', error);
     }
+  }
 }

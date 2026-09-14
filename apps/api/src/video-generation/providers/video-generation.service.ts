@@ -14,7 +14,9 @@ export class VideoGenerationService implements VideoGenerator {
     private readonly generator: VideoGenerator,
   ) {}
 
-  async generate(request: VideoGenerationRequest): Promise<VideoGenerationResult> {
+  async generate(
+    request: VideoGenerationRequest,
+  ): Promise<VideoGenerationResult> {
     return this.generator.generate(request);
   }
 

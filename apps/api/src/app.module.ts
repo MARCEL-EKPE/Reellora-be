@@ -8,10 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import databaseConfig from './config/database.config';
 import envValidation from './config/env.validation';
-import jwtConfig from './auth/config/jwt.config';
-import { JwtModule } from '@nestjs/jwt';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { AccessTokenGuard } from './auth/guards/access-token.guard';
 import { AuthenticationGuard } from './auth/guards/authentication.guard';
 import { DataResponseInterceptor } from './common/interceptors/data-response.interceptor';
 import { AdminSeedService } from './seeds/admin.seed.service';
@@ -45,7 +42,11 @@ const bullConfig = {
 };
 
 @Module({
-  imports: [UsersModule, SocialAccountsModule, AuthModule, MediaProcessingModule,
+  imports: [
+    UsersModule,
+    SocialAccountsModule,
+    AuthModule,
+    MediaProcessingModule,
     OpenAiModule,
     PipelineCoreModule,
     PipelineQueuesModule,
@@ -58,11 +59,11 @@ const bullConfig = {
     QualityControlModule,
     PublishingModule,
     ConfigModule.forRoot({
-    isGlobal: true,
-    envFilePath: ['.env', '../../.env'],
-    load: [databaseConfig, appConfig],
-    validationSchema: envValidation
-  }),
+      isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
+      load: [databaseConfig, appConfig],
+      validationSchema: envValidation,
+    }),
     RedisModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -77,28 +78,26 @@ const bullConfig = {
         synchronize: configService.get('database.synchronize'),
         autoLoadEntities: configService.get('database.autoLoadEntities'),
         // logging: true
-      })
+      }),
     }),
     TypeOrmModule.forFeature([User]),
-    ConfigModule.forFeature(jwtConfig),
-    JwtModule.registerAsync(jwtConfig.asProvider()),
     BullModule.forRoot(bullConfig as unknown as BullRootModuleOptions),
     ScheduleModule.forRoot(),
     AppMcpModule,
-    ContentIngestionModule
+    ContentIngestionModule,
   ],
   controllers: [AppController],
-  providers: [AppService,
+  providers: [
+    AppService,
     {
       provide: APP_GUARD,
-      useClass: AuthenticationGuard
+      useClass: AuthenticationGuard,
     },
     {
       provide: APP_INTERCEPTOR,
-      useClass: DataResponseInterceptor
+      useClass: DataResponseInterceptor,
     },
-    AccessTokenGuard,
     AdminSeedService,
   ],
 })
-export class AppModule { }
+export class AppModule {}

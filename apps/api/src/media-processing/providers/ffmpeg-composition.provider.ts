@@ -14,7 +14,9 @@ export class FfmpegCompositionProvider {
 
   async compose(request: CompositionRequest): Promise<string> {
     if (!this.config.useMockComposition) {
-      throw new BadRequestException('Real FFmpeg composition not yet implemented');
+      throw new BadRequestException(
+        'Real FFmpeg composition not yet implemented',
+      );
     }
 
     await fs.mkdir(path.dirname(request.finalOutputPath), { recursive: true });

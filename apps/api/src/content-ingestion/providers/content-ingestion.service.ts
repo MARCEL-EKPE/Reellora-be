@@ -3,11 +3,11 @@ import { ContentSourceIngestionProvider } from './content-source-ingestion.provi
 
 @Injectable()
 export class ContentIngestionService {
-    constructor(
-        private readonly contentSourceIngestionProvider: ContentSourceIngestionProvider,
-    ) { }
+  constructor(
+    private readonly contentSourceIngestionProvider: ContentSourceIngestionProvider,
+  ) {}
 
-    async discoverFeeds() {
-        return this.contentSourceIngestionProvider.ingestSources();
-    }
+  async discoverFeeds() {
+    return this.contentSourceIngestionProvider.ingestSources();
+  }
 }

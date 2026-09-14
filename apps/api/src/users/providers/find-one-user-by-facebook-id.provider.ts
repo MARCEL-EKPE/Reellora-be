@@ -5,18 +5,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class FindOneUserByFacebookIdProvider {
+  constructor(
+    /**
+     * Injecting usersRepository
+     */
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+  ) {}
 
-    constructor(
-        /**
-         * Injecting usersRepository
-         */
-        @InjectRepository(User)
-        private readonly usersRepository: Repository<User>
-    ) { }
-
-    public async findOneByFacebookId(facebookId: string) {
-
-        return this.usersRepository.findOneBy({ facebookId })
-    }
+  public async findOneByFacebookId(facebookId: string) {
+    return this.usersRepository.findOneBy({ facebookId });
+  }
 }
-

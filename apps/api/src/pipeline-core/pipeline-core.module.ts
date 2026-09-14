@@ -13,21 +13,21 @@ import { QualityCheck } from './entities/quality-check.entity';
 import { Publication } from './entities/publication.entity';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            Video,
-            Article,
-            Research,
-            Script,
-            VideoPlan,
-            VideoScene,
-            GenerationJob,
-            MediaAsset,
-            RenderJob,
-            QualityCheck,
-            Publication,
-        ]),
-    ],
-    exports: [TypeOrmModule],
+  imports: [
+    TypeOrmModule.forFeature([
+      Video,
+      Article,
+      Research,
+      Script,
+      VideoPlan,
+      VideoScene,
+      GenerationJob,
+      MediaAsset,
+      RenderJob,
+      QualityCheck,
+      Publication,
+    ]),
+  ],
+  exports: [TypeOrmModule],
 })
-export class PipelineCoreModule { }
+export class PipelineCoreModule {}

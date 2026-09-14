@@ -13,55 +13,56 @@ import type { PipelineJob } from '../interfaces/pipeline-job.interface';
 
 @Processor(RESEARCH_QUEUE)
 export class ResearchProcessor extends WorkerHost {
-    private readonly logger = new Logger(ResearchProcessor.name);
+  private readonly logger = new Logger(ResearchProcessor.name);
 
-    constructor(
-        @InjectRepository(Video)
-        private readonly videoRepository: Repository<Video>,
-        @InjectRepository(Research)
-        private readonly researchRepository: Repository<Research>,
-        private readonly researchProvider: ResearchProvider,
-        private readonly orchestrator: PipelineOrchestratorService,
-    ) {
-        super();
+  constructor(
+    @InjectRepository(Video)
+    private readonly videoRepository: Repository<Video>,
+    @InjectRepository(Research)
+    private readonly researchRepository: Repository<Research>,
+    private readonly researchProvider: ResearchProvider,
+    private readonly orchestrator: PipelineOrchestratorService,
+  ) {
+    super();
+  }
+
+  async process(job: Job<PipelineJob>): Promise<void> {
+    const { videoId } = job.data;
+    this.logger.log(`[Research] videoId=${videoId}`);
+
+    const video = await this.videoRepository.findOne({
+      where: { id: videoId },
+      relations: ['article'],
+    });
+    if (!video || !video.article) {
+      throw new Error(`Video ${videoId} has no linked article`);
     }
 
-    async process(job: Job<PipelineJob>): Promise<void> {
-        const { videoId } = job.data;
-        this.logger.log(`[Research] videoId=${videoId}`);
+    try {
+      const result = await this.researchProvider.researchArticle(video.article);
 
-        const video = await this.videoRepository.findOne({
-            where: { id: videoId },
-            relations: ['article'],
-        });
-        if (!video || !video.article) {
-            throw new Error(`Video ${videoId} has no linked article`);
-        }
+      const research = this.researchRepository.create({
+        video,
+        topic: result.topic,
+        summary: result.summary,
+        keyFacts: result.keyFacts,
+        entities: result.entities,
+        timeline: result.timeline,
+        uncertainties: result.uncertainties,
+        sources: result.sources,
+      });
 
-        try {
-            const result = await this.researchProvider.researchArticle(video.article);
-
-            const research = this.researchRepository.create({
-                video,
-                topic: result.topic,
-                summary: result.summary,
-                keyFacts: result.keyFacts,
-                entities: result.entities,
-                timeline: result.timeline,
-                uncertainties: result.uncertainties,
-                sources: result.sources,
-            });
-
-            await this.researchRepository.save(research);
-            video.status = VideoStatus.SCRIPT_GENERATING;
-            await this.videoRepository.save(video);
-            await this.orchestrator.enqueue(videoId, 'script');
-        } catch (error) {
-            this.logger.error(`[Research] failed for videoId=${videoId}`, error);
-            video.status = VideoStatus.RESEARCH_FAILED;
-            video.errorMessage = error instanceof Error ? error.message : String(error);
-            await this.videoRepository.save(video);
-            throw error;
-        }
+      await this.researchRepository.save(research);
+      video.status = VideoStatus.SCRIPT_GENERATING;
+      await this.videoRepository.save(video);
+      await this.orchestrator.enqueue(videoId, 'script');
+    } catch (error) {
+      this.logger.error(`[Research] failed for videoId=${videoId}`, error);
+      video.status = VideoStatus.RESEARCH_FAILED;
+      video.errorMessage =
+        error instanceof Error ? error.message : String(error);
+      await this.videoRepository.save(video);
+      throw error;
     }
+  }
 }

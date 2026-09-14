@@ -10,14 +10,21 @@ import { FindOneUserByGoogleIdProvider } from './providers/find-one-user-by-goog
 import { CreateGoogleUserProvider } from './providers/create-google-user.provider';
 import { FindOneUserByFacebookIdProvider } from './providers/find-one-user-by-facebook-id.provider';
 import { CreateFacebookUserProvider } from './providers/create-facebook-user.provider';
+import { ClerkUserSyncProvider } from './providers/clerk-user-sync.provider';
 
 @Module({
   controllers: [UsersController],
-  providers: [UsersService, CreateUserProvider, FindOneUserByEmailProvider, FindOneUserByGoogleIdProvider, CreateGoogleUserProvider, FindOneUserByFacebookIdProvider, CreateFacebookUserProvider],
-  exports: [UsersService],
-  imports: [forwardRef(() => AuthModule),
-  TypeOrmModule.forFeature([User]),
+  providers: [
+    UsersService,
+    CreateUserProvider,
+    FindOneUserByEmailProvider,
+    FindOneUserByGoogleIdProvider,
+    CreateGoogleUserProvider,
+    FindOneUserByFacebookIdProvider,
+    CreateFacebookUserProvider,
+    ClerkUserSyncProvider,
   ],
-
+  exports: [UsersService],
+  imports: [forwardRef(() => AuthModule), TypeOrmModule.forFeature([User])],
 })
-export class UsersModule { }
+export class UsersModule {}

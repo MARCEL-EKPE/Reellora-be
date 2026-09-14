@@ -13,32 +13,35 @@ import type { PipelineJob } from '../interfaces/pipeline-job.interface';
 
 @Processor(INGESTION_QUEUE)
 export class IngestionProcessor extends WorkerHost {
-    private readonly logger = new Logger(IngestionProcessor.name);
+  private readonly logger = new Logger(IngestionProcessor.name);
 
-    constructor(
-        @InjectRepository(Video)
-        private readonly videoRepository: Repository<Video>,
-        private readonly contentIngestionService: ContentIngestionService,
-        private readonly articleIngestionService: ArticleIngestionService,
-        private readonly orchestrator: PipelineOrchestratorService,
-    ) {
-        super();
+  constructor(
+    @InjectRepository(Video)
+    private readonly videoRepository: Repository<Video>,
+    private readonly contentIngestionService: ContentIngestionService,
+    private readonly articleIngestionService: ArticleIngestionService,
+    private readonly orchestrator: PipelineOrchestratorService,
+  ) {
+    super();
+  }
+
+  async process(job: Job<PipelineJob>): Promise<void> {
+    const { videoId } = job.data;
+    this.logger.log(`[Ingestion] videoId=${videoId}`);
+
+    const video = await this.videoRepository.findOne({
+      where: { id: videoId },
+      relations: ['article'],
+    });
+    if (!video || !video.article) {
+      throw new Error(`Video ${videoId} has no linked article`);
     }
 
-    async process(job: Job<PipelineJob>): Promise<void> {
-        const { videoId } = job.data;
-        this.logger.log(`[Ingestion] videoId=${videoId}`);
+    const items = await this.contentIngestionService.discoverFeeds();
+    await this.articleIngestionService.ingestArticles(items);
 
-        const video = await this.videoRepository.findOne({ where: { id: videoId }, relations: ['article'] });
-        if (!video || !video.article) {
-            throw new Error(`Video ${videoId} has no linked article`);
-        }
-
-        const items = await this.contentIngestionService.discoverFeeds();
-        await this.articleIngestionService.ingestArticles(items);
-
-        video.status = VideoStatus.RESEARCHING;
-        await this.videoRepository.save(video);
-        await this.orchestrator.enqueue(videoId, 'research');
-    }
+    video.status = VideoStatus.RESEARCHING;
+    await this.videoRepository.save(video);
+    await this.orchestrator.enqueue(videoId, 'research');
+  }
 }

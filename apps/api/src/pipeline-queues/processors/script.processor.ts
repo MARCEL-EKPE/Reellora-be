@@ -14,57 +14,60 @@ import type { ResearchResult } from '../../research/interfaces/research.interfac
 
 @Processor(SCRIPT_QUEUE)
 export class ScriptProcessor extends WorkerHost {
-    private readonly logger = new Logger(ScriptProcessor.name);
+  private readonly logger = new Logger(ScriptProcessor.name);
 
-    constructor(
-        @InjectRepository(Video)
-        private readonly videoRepository: Repository<Video>,
-        @InjectRepository(Script)
-        private readonly scriptRepository: Repository<Script>,
-        private readonly scriptProvider: ScriptProvider,
-        private readonly orchestrator: PipelineOrchestratorService,
-    ) {
-        super();
+  constructor(
+    @InjectRepository(Video)
+    private readonly videoRepository: Repository<Video>,
+    @InjectRepository(Script)
+    private readonly scriptRepository: Repository<Script>,
+    private readonly scriptProvider: ScriptProvider,
+    private readonly orchestrator: PipelineOrchestratorService,
+  ) {
+    super();
+  }
+
+  async process(job: Job<PipelineJob>): Promise<void> {
+    const { videoId } = job.data;
+    this.logger.log(`[Script] videoId=${videoId}`);
+
+    const video = await this.videoRepository.findOne({
+      where: { id: videoId },
+      relations: ['research'],
+    });
+    if (!video || !video.research) {
+      throw new Error(`Video ${videoId} has no linked research`);
     }
 
-    async process(job: Job<PipelineJob>): Promise<void> {
-        const { videoId } = job.data;
-        this.logger.log(`[Script] videoId=${videoId}`);
+    try {
+      const result = await this.scriptProvider.generateScript(
+        video.research as ResearchResult,
+      );
 
-        const video = await this.videoRepository.findOne({
-            where: { id: videoId },
-            relations: ['research'],
-        });
-        if (!video || !video.research) {
-            throw new Error(`Video ${videoId} has no linked research`);
-        }
+      const script = this.scriptRepository.create({
+        video,
+        title: result.title,
+        hook: result.hook,
+        sections: result.sections,
+        conclusion: result.conclusion,
+        fullText: result.fullText,
+        keywords: result.keywords,
+        tags: result.tags,
+        thumbnailConcept: result.thumbnailConcept,
+        estimatedDurationSeconds: result.estimatedDurationSeconds,
+      });
 
-        try {
-            const result = await this.scriptProvider.generateScript(video.research as ResearchResult);
-
-            const script = this.scriptRepository.create({
-                video,
-                title: result.title,
-                hook: result.hook,
-                sections: result.sections,
-                conclusion: result.conclusion,
-                fullText: result.fullText,
-                keywords: result.keywords,
-                tags: result.tags,
-                thumbnailConcept: result.thumbnailConcept,
-                estimatedDurationSeconds: result.estimatedDurationSeconds,
-            });
-
-            await this.scriptRepository.save(script);
-            video.status = VideoStatus.PLANNING;
-            await this.videoRepository.save(video);
-            await this.orchestrator.enqueue(videoId, 'plan');
-        } catch (error) {
-            this.logger.error(`[Script] failed for videoId=${videoId}`, error);
-            video.status = VideoStatus.SCRIPT_GENERATION_FAILED;
-            video.errorMessage = error instanceof Error ? error.message : String(error);
-            await this.videoRepository.save(video);
-            throw error;
-        }
+      await this.scriptRepository.save(script);
+      video.status = VideoStatus.PLANNING;
+      await this.videoRepository.save(video);
+      await this.orchestrator.enqueue(videoId, 'plan');
+    } catch (error) {
+      this.logger.error(`[Script] failed for videoId=${videoId}`, error);
+      video.status = VideoStatus.SCRIPT_GENERATION_FAILED;
+      video.errorMessage =
+        error instanceof Error ? error.message : String(error);
+      await this.videoRepository.save(video);
+      throw error;
     }
+  }
 }

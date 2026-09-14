@@ -18,84 +18,96 @@ import type { PipelineJob } from '../interfaces/pipeline-job.interface';
 
 @Processor(RENDER_QUEUE)
 export class MediaProcessingProcessor extends WorkerHost {
-    private readonly logger = new Logger(MediaProcessingProcessor.name);
+  private readonly logger = new Logger(MediaProcessingProcessor.name);
 
-    constructor(
-        @InjectRepository(Video)
-        private readonly videoRepository: Repository<Video>,
-        @InjectRepository(VideoScene)
-        private readonly videoSceneRepository: Repository<VideoScene>,
-        @InjectRepository(MediaAsset)
-        private readonly mediaAssetRepository: Repository<MediaAsset>,
-        private readonly ffmpegCompositionProvider: FfmpegCompositionProvider,
-        private readonly assetStorageService: AssetStorageService,
-        private readonly orchestrator: PipelineOrchestratorService,
-    ) {
-        super();
+  constructor(
+    @InjectRepository(Video)
+    private readonly videoRepository: Repository<Video>,
+    @InjectRepository(VideoScene)
+    private readonly videoSceneRepository: Repository<VideoScene>,
+    @InjectRepository(MediaAsset)
+    private readonly mediaAssetRepository: Repository<MediaAsset>,
+    private readonly ffmpegCompositionProvider: FfmpegCompositionProvider,
+    private readonly assetStorageService: AssetStorageService,
+    private readonly orchestrator: PipelineOrchestratorService,
+  ) {
+    super();
+  }
+
+  async process(job: Job<PipelineJob>): Promise<void> {
+    const { videoId } = job.data;
+    this.logger.log(`[MediaProcessing] videoId=${videoId}`);
+
+    const video = await this.videoRepository.findOne({
+      where: { id: videoId },
+    });
+    if (!video) {
+      throw new Error(`Video ${videoId} not found`);
     }
 
-    async process(job: Job<PipelineJob>): Promise<void> {
-        const { videoId } = job.data;
-        this.logger.log(`[MediaProcessing] videoId=${videoId}`);
+    try {
+      const scenes = await this.videoSceneRepository.find({
+        where: { videoPlan: { video: { id: videoId } } },
+        relations: ['assets'],
+      });
 
-        const video = await this.videoRepository.findOne({ where: { id: videoId } });
-        if (!video) {
-            throw new Error(`Video ${videoId} not found`);
-        }
+      const sceneAssets = scenes
+        .filter((scene) => scene.status === 'completed')
+        .map((scene) => {
+          const videoAsset = scene.assets?.find(
+            (a) => a.type === AssetType.VIDEO,
+          );
+          const narrationAsset = scene.assets?.find(
+            (a) => a.type === AssetType.AUDIO,
+          );
+          return {
+            storageKey: videoAsset?.storageKey || '',
+            durationSeconds: scene.durationSeconds || 5,
+            narrationStorageKey: narrationAsset?.storageKey,
+          };
+        })
+        .filter((s) => s.storageKey);
 
-        try {
-            const scenes = await this.videoSceneRepository.find({
-                where: { videoPlan: { video: { id: videoId } } },
-                relations: ['assets'],
-            });
+      const finalOutputPath = path.resolve(
+        `./pipeline-output/${videoId}/final.mp4`,
+      );
 
-            const sceneAssets = scenes
-                .filter((scene) => scene.status === 'completed')
-                .map((scene) => {
-                    const videoAsset = scene.assets?.find((a) => a.type === AssetType.VIDEO);
-                    const narrationAsset = scene.assets?.find((a) => a.type === AssetType.AUDIO);
-                    return {
-                        storageKey: videoAsset?.storageKey || '',
-                        durationSeconds: scene.durationSeconds || 5,
-                        narrationStorageKey: narrationAsset?.storageKey,
-                    };
-                })
-                .filter((s) => s.storageKey);
+      await this.ffmpegCompositionProvider.compose({
+        videoId,
+        sceneAssets,
+        finalOutputPath,
+      });
 
-            const finalOutputPath = path.resolve(`./pipeline-output/${videoId}/final.mp4`);
+      const buffer = await fs.promises.readFile(finalOutputPath);
+      const asset = await this.assetStorageService.upload({
+        key: `videos/${videoId}/final.mp4`,
+        body: buffer,
+        contentType: 'video/mp4',
+      });
 
-            await this.ffmpegCompositionProvider.compose({
-                videoId,
-                sceneAssets,
-                finalOutputPath,
-            });
+      const mediaAsset = this.mediaAssetRepository.create({
+        video,
+        type: AssetType.VIDEO,
+        storageKey: asset.storageKey,
+        url: asset.url,
+        mimeType: 'video/mp4',
+        sizeBytes: asset.sizeBytes,
+      });
+      await this.mediaAssetRepository.save(mediaAsset);
 
-            const buffer = await fs.promises.readFile(finalOutputPath);
-            const asset = await this.assetStorageService.upload({
-                key: `videos/${videoId}/final.mp4`,
-                body: buffer,
-                contentType: 'video/mp4',
-            });
-
-            const mediaAsset = this.mediaAssetRepository.create({
-                video,
-                type: AssetType.VIDEO,
-                storageKey: asset.storageKey,
-                url: asset.url,
-                mimeType: 'video/mp4',
-                sizeBytes: asset.sizeBytes,
-            });
-            await this.mediaAssetRepository.save(mediaAsset);
-
-            video.status = VideoStatus.QUALITY_CHECK;
-            await this.videoRepository.save(video);
-            await this.orchestrator.enqueue(videoId, 'quality-check');
-        } catch (error) {
-            this.logger.error(`[MediaProcessing] failed for videoId=${videoId}`, error);
-            video.status = VideoStatus.RENDERING_FAILED;
-            video.errorMessage = error instanceof Error ? error.message : String(error);
-            await this.videoRepository.save(video);
-            throw error;
-        }
+      video.status = VideoStatus.QUALITY_CHECK;
+      await this.videoRepository.save(video);
+      await this.orchestrator.enqueue(videoId, 'quality-check');
+    } catch (error) {
+      this.logger.error(
+        `[MediaProcessing] failed for videoId=${videoId}`,
+        error,
+      );
+      video.status = VideoStatus.RENDERING_FAILED;
+      video.errorMessage =
+        error instanceof Error ? error.message : String(error);
+      await this.videoRepository.save(video);
+      throw error;
     }
+  }
 }

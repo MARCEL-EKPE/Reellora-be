@@ -25,7 +25,11 @@ import { GenerationProvider } from '../pipeline-core/enums/generation-provider.e
           : config.provider || GenerationProvider.RUNWAY;
         return provider === GenerationProvider.MOCK ? mock : runway;
       },
-      inject: [videoGenerationConfig.KEY, RunwayVideoGeneratorProvider, MockVideoGeneratorProvider],
+      inject: [
+        videoGenerationConfig.KEY,
+        RunwayVideoGeneratorProvider,
+        MockVideoGeneratorProvider,
+      ],
     },
   ],
   exports: [VIDEO_GENERATOR, VideoGenerationService],

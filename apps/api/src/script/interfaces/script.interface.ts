@@ -9,4 +9,3 @@ export interface VideoScript {
   thumbnailConcept: string;
   estimatedDurationSeconds: number;
 }
-

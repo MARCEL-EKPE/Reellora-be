@@ -1,5 +1,7 @@
 <template>
-  <UApp>
-    <NuxtPage />
-  </UApp>
+  <ClerkProvider>
+    <UApp>
+      <NuxtPage />
+    </UApp>
+  </ClerkProvider>
 </template>

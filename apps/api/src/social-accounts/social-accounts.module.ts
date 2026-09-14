@@ -11,24 +11,27 @@ import youtubeConfig from './config/youtube.config';
 import { setCryptoServiceProvider } from './social-accounts.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SocialAccounts]),
+  imports: [
+    TypeOrmModule.forFeature([SocialAccounts]),
     UsersModule,
-  ConfigModule.forFeature(youtubeConfig)
+    ConfigModule.forFeature(youtubeConfig),
   ],
   controllers: [SocialAccountsController],
-  providers: [SocialAccountsService, YoutubeServiceProvider, CryptoServiceProvider]
+  providers: [
+    SocialAccountsService,
+    YoutubeServiceProvider,
+    CryptoServiceProvider,
+  ],
 })
 export class SocialAccountsModule implements OnModuleInit {
-
   constructor(
     /**
-    * Injecting crytoServiceProvider
-    */
-    private readonly crytoServiceProvider: CryptoServiceProvider
-  ) { }
+     * Injecting crytoServiceProvider
+     */
+    private readonly crytoServiceProvider: CryptoServiceProvider,
+  ) {}
 
   onModuleInit() {
     setCryptoServiceProvider(this.crytoServiceProvider);
   }
-
 }

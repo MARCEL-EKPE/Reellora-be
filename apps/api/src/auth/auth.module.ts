@@ -1,31 +1,18 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { AuthController } from './auth.controller';
-import { AuthService } from './providers/auth.service';
 import { UsersModule } from 'src/users/users.module';
 import { HashingProvider } from './providers/hashing.provider';
 import { Argon2Provider } from './providers/argon2.provider';
-import { SignInProvider } from './providers/sign-in.provider';
-import { ConfigModule } from '@nestjs/config';
-import jwtConfig from './config/jwt.config';
-import { JwtModule } from '@nestjs/jwt';
-import { GenerateTokensProvider } from './providers/generate-tokens.provider';
-import { RefreshTokensProvider } from './providers/refresh-tokens.provider';
-import { GoogleAuthenticationController } from './social/google-authentication.controller';
-import { GoogleAuthenticationService } from './social/providers/google-authentication.service';
-import { FacebookAuthenticationController } from './social/facebook-authentication.controller';
-import { FacebookAuthenticationService } from './social/providers/facebook-authentication.service';
+import { ClerkAuthGuard } from './guards/clerk-auth.guard';
 
 @Module({
-  controllers: [AuthController, GoogleAuthenticationController, FacebookAuthenticationController],
-  providers: [AuthService, {
-    provide: HashingProvider,
-    useClass: Argon2Provider
-  }, SignInProvider, GenerateTokensProvider, RefreshTokensProvider, GoogleAuthenticationService, FacebookAuthenticationService
+  providers: [
+    ClerkAuthGuard,
+    {
+      provide: HashingProvider,
+      useClass: Argon2Provider,
+    },
   ],
-  imports: [forwardRef(() => UsersModule),
-  ConfigModule.forFeature(jwtConfig),
-  JwtModule.registerAsync(jwtConfig.asProvider())
-  ],
-  exports: [AuthService, HashingProvider]
+  imports: [forwardRef(() => UsersModule)],
+  exports: [ClerkAuthGuard, HashingProvider],
 })
-export class AuthModule { }
+export class AuthModule {}
