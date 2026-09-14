@@ -1,2 +1,18 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+@layer utilities {
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-600 via-violet-600 to-fuchsia-500 bg-clip-text text-transparent;
+  }
+
+  .gradient-border {
+    @apply relative before:absolute before:inset-0 before:rounded-[inherit] before:bg-gradient-to-r before:from-blue-600 before:via-violet-600 before:to-fuchsia-500 before:p-[1px] before:content-[''];
+  }
+
+  .hero-glow {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.18), transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.12), transparent 40%);
+  }
+}
