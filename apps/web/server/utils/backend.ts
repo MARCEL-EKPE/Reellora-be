@@ -21,24 +21,65 @@ const cookieOptions = {
   path: '/',
 };
 
-export function backendFetch<T>(
+export async function backendFetch<T>(
   event: H3Event,
   path: string,
   options: Parameters<typeof $fetch>[1] = {},
 ): Promise<T> {
   const config = useRuntimeConfig(event);
-  const accessToken = getCookie(event, 'access-token');
-  const headers = new Headers(options.headers);
 
-  if (accessToken) {
-    headers.set('Authorization', `Bearer ${accessToken}`);
+  const makeRequest = async (accessToken?: string) => {
+    const headers = new Headers(options.headers);
+
+    if (accessToken) {
+      headers.set('Authorization', `Bearer ${accessToken}`);
+    }
+
+    return $fetch<T, string>(path, {
+      ...options,
+      baseURL: config.apiBase,
+      headers,
+    });
+  };
+
+  const accessToken = getCookie(event, 'access-token');
+
+  try {
+    return await makeRequest(accessToken);
+  } catch (error: any) {
+    if (error?.statusCode === 401 && accessToken) {
+      const refreshed = await refreshSession(event);
+      if (refreshed) {
+        return await makeRequest(getCookie(event, 'access-token'));
+      }
+    }
+
+    throw error;
+  }
+}
+
+export async function refreshSession(event: H3Event): Promise<boolean> {
+  const config = useRuntimeConfig(event);
+  const refreshToken = getCookie(event, 'refresh-token');
+
+  if (!refreshToken) {
+    clearSessionCookies(event);
+    return false;
   }
 
-  return $fetch<T, string>(path, {
-    ...options,
-    baseURL: config.apiBase,
-    headers,
-  });
+  try {
+    const response = await $fetch<AuthResponse>('/auth/refresh-tokens', {
+      baseURL: config.apiBase,
+      method: 'POST',
+      body: { refreshToken },
+    });
+
+    setSessionCookies(event, response);
+    return true;
+  } catch {
+    clearSessionCookies(event);
+    return false;
+  }
 }
 
 export function setSessionCookies(event: H3Event, response: AuthResponse) {

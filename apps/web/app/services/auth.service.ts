@@ -29,6 +29,9 @@ export function useAuthService() {
     session() {
       return $api<SessionResponse>('/auth/session');
     },
+    refresh() {
+      return $api<SessionResponse>('/auth/refresh', { method: 'POST' });
+    },
     signOut() {
       return $api('/auth/sign-out', { method: 'POST' });
     },
