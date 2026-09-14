@@ -21,7 +21,11 @@ const cookieOptions = {
   path: '/',
 };
 
-export function backendFetch<T>(event: H3Event, path: string, options: Parameters<typeof $fetch<T>>[1] = {}) {
+export function backendFetch<T>(
+  event: H3Event,
+  path: string,
+  options: Parameters<typeof $fetch>[1] = {},
+): Promise<T> {
   const config = useRuntimeConfig(event);
   const accessToken = getCookie(event, 'access-token');
   const headers = new Headers(options.headers);
@@ -30,7 +34,7 @@ export function backendFetch<T>(event: H3Event, path: string, options: Parameter
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
-  return $fetch<T>(path, {
+  return $fetch<T, string>(path, {
     ...options,
     baseURL: config.apiBase,
     headers,
@@ -51,7 +55,10 @@ export function getUserFromToken(token?: string): SessionUser | null {
   if (!token) return null;
 
   try {
-    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+    const encodedPayload = token.split('.')[1];
+    if (!encodedPayload) return null;
+
+    const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString());
     return { id: payload.sub, email: payload.email, role: payload.role };
   } catch {
     return null;

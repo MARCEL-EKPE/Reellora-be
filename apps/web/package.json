@@ -7,7 +7,8 @@
     "dev": "nuxt dev --port 3500",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
     "@healerlab/vue3-facebook-login": "^0.1.7",
@@ -26,6 +27,8 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^24.7.2"
+    "@types/node": "^24.7.2",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.2"
   }
 }
