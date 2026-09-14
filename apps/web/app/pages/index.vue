@@ -1,27 +1,3 @@
-<script setup lang="ts">
-import * as z from 'zod';
-import type { FormSubmitEvent } from '@nuxt/ui';
-
-const auth = useAuthStore();
-await callOnce('auth-session', () => auth.restoreSession());
-
-const schema = z.object({
-  email: z.string().email('Enter a valid email'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-type Schema = z.output<typeof schema>;
-
-const state = reactive<Partial<Schema>>({
-  email: '',
-  password: '',
-});
-
-async function onSubmit(event: FormSubmitEvent<Schema>) {
-  await auth.signIn(event.data.email, event.data.password);
-}
-</script>
-
 <template>
   <div class="flex min-h-dvh items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-950 dark:to-slate-900">
     <UCard class="w-full max-w-md" variant="outline">
@@ -40,7 +16,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             <UInput
               v-model="state.email"
               type="email"
-              placeholder="admin@example.com"
+              placeholder="user@example.com"
               icon="i-lucide-mail"
               class="w-full"
             />
@@ -116,3 +92,28 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import * as z from 'zod';
+import type { FormSubmitEvent } from '@nuxt/ui';
+
+const auth = useAuthStore();
+await callOnce('auth-session', () => auth.restoreSession());
+
+const schema = z.object({
+  email: z.string().email('Enter a valid email'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+type Schema = z.output<typeof schema>;
+
+const state = reactive<Partial<Schema>>({
+  email: '',
+  password: '',
+});
+
+async function onSubmit(event: FormSubmitEvent<Schema>) {
+  await auth.signIn(event.data.email, event.data.password);
+}
+</script>
+
