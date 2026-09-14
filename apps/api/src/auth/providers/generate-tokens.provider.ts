@@ -53,7 +53,6 @@ export class GenerateTokensProvider {
 
             this.signToken(user.id, this.jwtConfiguration.refershTokenTtl)
         ])
-        console.log(accessToken, refreshToken)
         return { accessToken, refreshToken }
 
     }

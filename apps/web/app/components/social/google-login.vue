@@ -12,6 +12,7 @@
 import { GoogleSignInButton, type CredentialResponse } from 'vue3-google-signin';
 
 const auth = useAuthStore();
+const toast = useToast();
 
 async function ggLoginSuccess(response: CredentialResponse) {
   const { credential } = response;
@@ -21,6 +22,6 @@ async function ggLoginSuccess(response: CredentialResponse) {
 }
 
 function ggLoginError() {
-  console.error('Google login failed');
+  toast.add({ title: 'Google login failed', color: 'error' });
 }
 </script>

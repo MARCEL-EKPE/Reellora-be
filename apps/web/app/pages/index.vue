@@ -3,6 +3,7 @@ import * as z from 'zod';
 import type { FormSubmitEvent } from '@nuxt/ui';
 
 const auth = useAuthStore();
+await callOnce('auth-session', () => auth.restoreSession());
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),

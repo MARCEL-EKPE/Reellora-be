@@ -18,7 +18,7 @@ import { AdminSeedService } from './seeds/admin.seed.service';
 import appConfig from './config/app.config';
 import { User } from './users/user.entity';
 import { MediaProcessingModule } from './media-processing/media-processing.module';
-import { BullModule } from '@nestjs/bullmq';
+import { BullModule, type BullRootModuleOptions } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppMcpModule } from './mcp/mcp.module';
 import { ContentIngestionModule } from './content-ingestion/content-ingestion.module';
@@ -33,6 +33,16 @@ import { AssetsModule } from './assets/assets.module';
 import { QualityControlModule } from './quality-control/quality-control.module';
 import { PublishingModule } from './publishing/publishing.module';
 import { OpenAiModule } from './openai/openai.module';
+
+const bullConfig = {
+  connection: {
+    host: process.env.REDIS_HOST ?? 'localhost',
+    port: Number(process.env.REDIS_PORT ?? 6379),
+  },
+  defaultJobOptions: {
+    attempts: 3,
+  },
+};
 
 @Module({
   imports: [UsersModule, SocialAccountsModule, AuthModule, MediaProcessingModule,
@@ -72,15 +82,7 @@ import { OpenAiModule } from './openai/openai.module';
     TypeOrmModule.forFeature([User]),
     ConfigModule.forFeature(jwtConfig),
     JwtModule.registerAsync(jwtConfig.asProvider()),
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST ?? 'localhost',
-        port: Number(process.env.REDIS_PORT ?? 6379),
-      },
-      defaultJobOptions: {
-        attempts: 3,
-      }
-    }),
+    BullModule.forRoot(bullConfig as unknown as BullRootModuleOptions),
     ScheduleModule.forRoot(),
     AppMcpModule,
     ContentIngestionModule

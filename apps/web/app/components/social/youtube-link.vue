@@ -10,19 +10,17 @@
 </template>
 
 <script setup lang="ts">
-const config = useRuntimeConfig();
-const auth = useAuthStore();
+import { useSocialAccountsService } from '~/services/social-accounts.service';
+
+const socialAccounts = useSocialAccountsService();
+const toast = useToast();
 
 async function linkYoutube() {
   try {
-    const res = await $fetch<{ data: { url: string } }>(`${config.public.apiBase}/social-accounts/youtube/link`, {
-      headers: auth.accessToken ? { Authorization: `Bearer ${auth.accessToken}` } : undefined,
-    });
-    if (res?.data?.url) {
-      window.location.href = res.data.url;
-    }
-  } catch (error) {
-    console.error('Failed to get YouTube auth URL:', error);
+    const { data } = await socialAccounts.getYouTubeLink();
+    await navigateTo(data.url, { external: true });
+  } catch {
+    toast.add({ title: 'Unable to connect YouTube', color: 'error' });
   }
 }
 </script>
