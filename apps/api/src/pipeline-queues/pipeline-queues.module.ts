@@ -3,7 +3,6 @@ import { BullModule } from '@nestjs/bullmq';
 import { PipelineCoreModule } from '../pipeline-core/pipeline-core.module';
 import { PipelineOrchestratorService } from './providers/pipeline-orchestrator.service';
 import { PipelineSchedulerService } from './providers/pipeline-scheduler.service';
-import { IngestionProcessor } from './processors/ingestion.processor';
 import { ResearchProcessor } from './processors/research.processor';
 import { ScriptProcessor } from './processors/script.processor';
 import { VideoPlanningProcessor } from './processors/video-planning.processor';
@@ -21,7 +20,6 @@ import { MediaProcessingModule } from '../media-processing/media-processing.modu
 import { QualityControlModule } from '../quality-control/quality-control.module';
 import { PublishingModule } from '../publishing/publishing.module';
 import {
-  INGESTION_QUEUE,
   RESEARCH_QUEUE,
   SCRIPT_QUEUE,
   VIDEO_PLANNING_QUEUE,
@@ -34,7 +32,6 @@ import {
 @Module({
   imports: [
     BullModule.registerQueue(
-      { name: INGESTION_QUEUE },
       { name: RESEARCH_QUEUE },
       { name: SCRIPT_QUEUE },
       { name: VIDEO_PLANNING_QUEUE },
@@ -57,7 +54,6 @@ import {
   providers: [
     PipelineOrchestratorService,
     PipelineSchedulerService,
-    IngestionProcessor,
     ResearchProcessor,
     ScriptProcessor,
     VideoPlanningProcessor,

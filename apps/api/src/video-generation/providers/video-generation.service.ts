@@ -5,7 +5,7 @@ import {
   type VideoGenerationRequest,
   type VideoGenerationResult,
   type VideoGenerationStatus,
-} from '../../pipeline-core/interfaces/video-generation.interface';
+} from '../../shared/interfaces/video-generation.interface';
 
 @Injectable()
 export class VideoGenerationService implements VideoGenerator {

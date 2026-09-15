@@ -9,7 +9,7 @@ import { VideoStatus } from '../../pipeline-core/enums/video-status.enum';
 import { Research } from '../../pipeline-core/entities/research.entity';
 import { ResearchProvider } from '../../research/providers/research.provider';
 import { PipelineOrchestratorService } from '../providers/pipeline-orchestrator.service';
-import type { PipelineJob } from '../interfaces/pipeline-job.interface';
+import type { PipelineJob } from '../../shared/interfaces/pipeline-job.interface';
 
 @Processor(RESEARCH_QUEUE)
 export class ResearchProcessor extends WorkerHost {
@@ -32,14 +32,14 @@ export class ResearchProcessor extends WorkerHost {
 
     const video = await this.videoRepository.findOne({
       where: { id: videoId },
-      relations: ['article'],
+      relations: ['newsItem'],
     });
-    if (!video || !video.article) {
-      throw new Error(`Video ${videoId} has no linked article`);
+    if (!video || !video.newsItem) {
+      throw new Error(`Video ${videoId} has no linked news item`);
     }
 
     try {
-      const result = await this.researchProvider.researchArticle(video.article);
+      const result = await this.researchProvider.researchNewsItem(video.newsItem);
 
       const research = this.researchRepository.create({
         video,

@@ -5,13 +5,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
-import type { Article } from '../../pipeline-core/entities/article.entity';
+import type { NewsItem } from '../../pipeline-core/entities/news-item.entity';
 import { OpenAiClientProvider } from '../../openai/providers/openai-client.provider';
 import researchConfig from '../config/research.config';
 import type { ResearchResult } from '../interfaces/research.interface';
 
 const RESEARCH_SYSTEM_PROMPT = `You are a senior research analyst for an African business news YouTube channel.
-Given a news article, extract the key facts, entities, timeline, and uncertainties needed for a scriptwriter.
+Given a news item, extract the key facts, entities, timeline, and uncertainties needed for a scriptwriter.
 Respond with ONLY a JSON object, no prose, no markdown fences, matching:
 {
   "topic": "<short punchy topic/title>",
@@ -33,12 +33,12 @@ export class ResearchProvider {
     private readonly openAiClient: OpenAiClientProvider,
   ) {}
 
-  async researchArticle(article: Article): Promise<ResearchResult> {
+  async researchNewsItem(newsItem: NewsItem): Promise<ResearchResult> {
     if (this.config.useMockResearch) {
-      return this.mockResearch(article);
+      return this.mockResearch(newsItem);
     }
 
-    const prompt = this.buildPrompt(article);
+    const prompt = this.buildPrompt(newsItem);
     const response = await this.openAiClient.complete({
       system: RESEARCH_SYSTEM_PROMPT,
       prompt,
@@ -51,12 +51,12 @@ export class ResearchProvider {
     return this.parseResearchResponse(response.text);
   }
 
-  private buildPrompt(article: Article): string {
-    return `Article title: ${article.title}
-Source: ${article.source}
-Published: ${article.publishedAt?.toISOString() || 'unknown'}
-URL: ${article.url || 'unknown'}
-Summary: ${article.summary || article.content || 'No summary available'}
+  private buildPrompt(newsItem: NewsItem): string {
+    return `News item title: ${newsItem.title}
+Source: ${newsItem.source}
+Published: ${newsItem.publishedAt?.toISOString() || 'unknown'}
+URL: ${newsItem.sourceUrl || 'unknown'}
+Summary: ${newsItem.summary || newsItem.content || 'No summary available'}
 
 Extract the structured research object now.`;
   }
@@ -83,18 +83,20 @@ Extract the structured research object now.`;
     }
   }
 
-  private mockResearch(article: Article): ResearchResult {
+  private mockResearch(newsItem: NewsItem): ResearchResult {
     return {
-      topic: article.title,
+      topic: newsItem.title,
       summary:
-        article.summary ??
-        article.content ??
-        `Research summary for ${article.title}`,
-      keyFacts: [`Source: ${article.source}`, `Title: ${article.title}`],
+        newsItem.summary ??
+        newsItem.content ??
+        `Research summary for ${newsItem.title}`,
+      keyFacts: [`Source: ${newsItem.source}`, `Title: ${newsItem.title}`],
       entities: [],
       timeline: [],
       uncertainties: [],
-      sources: article.url ? [{ url: article.url, title: article.title }] : [],
+      sources: newsItem.sourceUrl
+        ? [{ url: newsItem.sourceUrl, title: newsItem.title }]
+        : [],
     };
   }
 }

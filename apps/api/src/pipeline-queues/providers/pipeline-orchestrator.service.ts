@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import {
-  INGESTION_QUEUE,
   RESEARCH_QUEUE,
   SCRIPT_QUEUE,
   VIDEO_PLANNING_QUEUE,
@@ -13,26 +12,15 @@ import {
 } from '../constants/queue-names.constant';
 import type {
   PipelineJob,
+  PipelineStage,
   SceneGenerationJob,
-} from '../interfaces/pipeline-job.interface';
-
-export type PipelineStage =
-  | 'ingest'
-  | 'research'
-  | 'script'
-  | 'plan'
-  | 'generate-media'
-  | 'render'
-  | 'quality-check'
-  | 'publish';
+} from '../../shared/interfaces/pipeline-job.interface';
 
 @Injectable()
 export class PipelineOrchestratorService {
   private readonly logger = new Logger(PipelineOrchestratorService.name);
 
   constructor(
-    @InjectQueue(INGESTION_QUEUE)
-    private readonly ingestionQueue: Queue<PipelineJob>,
     @InjectQueue(RESEARCH_QUEUE)
     private readonly researchQueue: Queue<PipelineJob>,
     @InjectQueue(SCRIPT_QUEUE) private readonly scriptQueue: Queue<PipelineJob>,
@@ -48,7 +36,12 @@ export class PipelineOrchestratorService {
   ) {}
 
   async startPipeline(videoId: string): Promise<void> {
-    this.logger.log(`Starting pipeline for video ${videoId}`);
+    this.logger.log(`Starting video generation pipeline for video ${videoId}`);
+    await this.enqueue(videoId, 'research');
+  }
+
+  async enqueueFromRequest(videoId: string): Promise<void> {
+    this.logger.log(`Enqueuing generation request for video ${videoId}`);
     await this.enqueue(videoId, 'research');
   }
 
@@ -79,8 +72,6 @@ export class PipelineOrchestratorService {
 
   private getQueueForStage(stage: PipelineStage): Queue<PipelineJob> {
     switch (stage) {
-      case 'ingest':
-        return this.ingestionQueue;
       case 'research':
         return this.researchQueue;
       case 'script':

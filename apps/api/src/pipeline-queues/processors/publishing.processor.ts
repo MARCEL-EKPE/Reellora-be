@@ -11,7 +11,7 @@ import { Publication } from '../../pipeline-core/entities/publication.entity';
 import { MediaAsset } from '../../pipeline-core/entities/media-asset.entity';
 import { Platform } from '../../pipeline-core/enums/platform.enum';
 import { PublishingService } from '../../publishing/providers/publishing.service';
-import type { PipelineJob } from '../interfaces/pipeline-job.interface';
+import type { PipelineJob } from '../../shared/interfaces/pipeline-job.interface';
 
 @Processor(PUBLISHING_QUEUE)
 export class PublishingProcessor extends WorkerHost {

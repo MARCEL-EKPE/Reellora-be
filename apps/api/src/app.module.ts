@@ -30,6 +30,7 @@ import { AssetsModule } from './assets/assets.module';
 import { QualityControlModule } from './quality-control/quality-control.module';
 import { PublishingModule } from './publishing/publishing.module';
 import { OpenAiModule } from './openai/openai.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 const bullConfig = {
   connection: {
@@ -58,6 +59,7 @@ const bullConfig = {
     AssetsModule,
     QualityControlModule,
     PublishingModule,
+    DashboardModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
@@ -84,7 +86,6 @@ const bullConfig = {
     BullModule.forRoot(bullConfig as unknown as BullRootModuleOptions),
     ScheduleModule.forRoot(),
     AppMcpModule,
-    ContentIngestionModule,
   ],
   controllers: [AppController],
   providers: [

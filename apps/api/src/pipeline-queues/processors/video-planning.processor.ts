@@ -11,7 +11,7 @@ import { VideoScene as VideoSceneEntity } from '../../pipeline-core/entities/vid
 import { SceneStatus } from '../../pipeline-core/enums/scene-status.enum';
 import { VideoPlannerProvider } from '../../video-planning/providers/video-planner.provider';
 import { PipelineOrchestratorService } from '../providers/pipeline-orchestrator.service';
-import type { PipelineJob } from '../interfaces/pipeline-job.interface';
+import type { PipelineJob } from '../../shared/interfaces/pipeline-job.interface';
 import type { VideoScript } from '../../script/interfaces/script.interface';
 
 @Processor(VIDEO_PLANNING_QUEUE)

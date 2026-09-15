@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Video } from './entities/video.entity';
-import { Article } from './entities/article.entity';
+import { Category } from './entities/category.entity';
+import { ContentFeed } from './entities/content-feed.entity';
+import { NewsItem } from './entities/news-item.entity';
+import { NewsAsset } from './entities/news-asset.entity';
 import { Research } from './entities/research.entity';
 import { Script } from './entities/script.entity';
 import { VideoPlan } from './entities/video-plan.entity';
@@ -16,7 +19,10 @@ import { Publication } from './entities/publication.entity';
   imports: [
     TypeOrmModule.forFeature([
       Video,
-      Article,
+      Category,
+      ContentFeed,
+      NewsItem,
+      NewsAsset,
       Research,
       Script,
       VideoPlan,

@@ -1,8 +1,4 @@
-interface YouTubeLinkResponse {
-  data: {
-    url: string;
-  };
-}
+import type { YouTubeLinkResponse } from '@reellora/shared';
 
 export function useSocialAccountsService() {
   const { $api } = useNuxtApp();

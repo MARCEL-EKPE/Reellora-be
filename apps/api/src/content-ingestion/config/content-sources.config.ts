@@ -1,5 +1,5 @@
 import { registerAs } from '@nestjs/config';
-import type { ContentSourceDefinition } from '../interfaces/content-source.interface';
+import type { ContentSourceDefinition } from '../../shared/interfaces/content-source.interface';
 
 export default registerAs('contentSourcesConfig', () => {
   const defaultSources: ContentSourceDefinition[] = [
@@ -8,7 +8,7 @@ export default registerAs('contentSourcesConfig', () => {
       name: 'Reuters Africa',
       url: 'https://reutersbest.com/region/africa/feed/',
       type: 'rss',
-      category: 'news',
+      category: 'African Business',
       region: 'africa',
       enabled: true,
       description:
@@ -19,7 +19,7 @@ export default registerAs('contentSourcesConfig', () => {
       name: 'Bloomberg Africa',
       url: 'https://www.bloomberg.com/feeds/africa.rss',
       type: 'rss',
-      category: 'news',
+      category: 'African Business',
       region: 'africa',
       enabled: true,
       description:
@@ -30,7 +30,7 @@ export default registerAs('contentSourcesConfig', () => {
       name: 'BusinessDay Nigeria',
       url: 'https://businessday.ng/feed/',
       type: 'rss',
-      category: 'news',
+      category: 'African Business',
       region: 'nigeria',
       enabled: true,
       description:
@@ -41,7 +41,7 @@ export default registerAs('contentSourcesConfig', () => {
       name: 'African Development Bank Reports',
       url: 'https://www.afdb.org/en/news-and-events/feed',
       type: 'rss',
-      category: 'reports',
+      category: 'African Business',
       region: 'africa',
       enabled: true,
       description:
@@ -52,7 +52,7 @@ export default registerAs('contentSourcesConfig', () => {
       name: 'IMF Africa Data',
       url: 'https://www.imf.org/en/rss?category=Africa',
       type: 'rss',
-      category: 'data',
+      category: 'African Business',
       region: 'africa',
       enabled: true,
       description: 'Macroeconomic analysis and regional policy updates.',
@@ -62,7 +62,7 @@ export default registerAs('contentSourcesConfig', () => {
       name: 'World Bank Africa Data',
       url: 'https://www.worldbank.org/en/region/afr/rss',
       type: 'rss',
-      category: 'data',
+      category: 'African Business',
       region: 'africa',
       enabled: true,
       description: 'Development and regional economic data updates.',

@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { VideoStatus } from '../enums/video-status.enum';
-import { Article } from './article.entity';
+import { NewsItem } from './news-item.entity';
 import { Research } from './research.entity';
 import { Script } from './script.entity';
 import { VideoPlan } from './video-plan.entity';
@@ -22,7 +22,7 @@ export class Video {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'enum', enum: VideoStatus, default: VideoStatus.DISCOVERED })
+  @Column({ type: 'enum', enum: VideoStatus, default: VideoStatus.REQUESTED })
   status: VideoStatus;
 
   @Column({ type: 'varchar', nullable: true })
@@ -40,9 +40,12 @@ export class Video {
   @Column({ type: 'int', nullable: true })
   estimatedDurationSeconds?: number;
 
-  @OneToOne(() => Article, (article) => article.video, { cascade: true })
+  @Column({ type: 'uuid' })
+  newsItemId: string;
+
+  @OneToOne(() => NewsItem, (newsItem) => newsItem.video, { cascade: true })
   @JoinColumn()
-  article: Article;
+  newsItem: NewsItem;
 
   @OneToOne(() => Research, (research) => research.video, { cascade: true })
   @JoinColumn()

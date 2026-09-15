@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import assetsConfig from './config/assets.config';
-import { ASSET_STORAGE } from '../pipeline-core/interfaces/asset-storage.interface';
+import { ASSET_STORAGE } from '../shared/interfaces/asset-storage.interface';
 import { S3AssetStorageProvider } from './providers/s3-asset-storage.provider';
 import { LocalAssetStorageProvider } from './providers/local-asset-storage.provider';
 import { AssetStorageService } from './providers/asset-storage.service';

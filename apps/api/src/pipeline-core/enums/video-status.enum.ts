@@ -1,5 +1,6 @@
 export enum VideoStatus {
-  DISCOVERED = 'discovered',
+  REQUESTED = 'requested',
+  QUEUED = 'queued',
   RESEARCHING = 'researching',
   RESEARCH_FAILED = 'research_failed',
   SCRIPT_GENERATING = 'script_generating',

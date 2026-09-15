@@ -3,7 +3,7 @@ import {
   ContentSourceDefinition,
   ContentSourceFetcher,
   ContentSourceItem,
-} from '../interfaces/content-source.interface';
+} from '../../shared/interfaces/content-source.interface';
 
 class FakeContentSourceFetcher implements ContentSourceFetcher {
   async fetch(source: ContentSourceDefinition): Promise<ContentSourceItem[]> {

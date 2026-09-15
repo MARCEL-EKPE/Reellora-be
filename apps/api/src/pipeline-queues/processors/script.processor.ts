@@ -9,7 +9,7 @@ import { VideoStatus } from '../../pipeline-core/enums/video-status.enum';
 import { Script } from '../../pipeline-core/entities/script.entity';
 import { ScriptProvider } from '../../script/providers/script.provider';
 import { PipelineOrchestratorService } from '../providers/pipeline-orchestrator.service';
-import type { PipelineJob } from '../interfaces/pipeline-job.interface';
+import type { PipelineJob } from '../../shared/interfaces/pipeline-job.interface';
 import type { ResearchResult } from '../../research/interfaces/research.interface';
 
 @Processor(SCRIPT_QUEUE)

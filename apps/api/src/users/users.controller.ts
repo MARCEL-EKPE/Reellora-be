@@ -18,7 +18,7 @@ import { PatchUserDto } from './dtos/patch-user.dto';
 import { UsersService } from './providers/users.service';
 import { PatchUserPreferencesDTo } from './dtos/patch-user-preferences.dto';
 import { CurrentUserData } from 'src/auth/decorators/current-user-data.decorator';
-import { type CurrentUser } from 'src/auth/interfaces/current-user.interface';
+import { type CurrentUser } from 'src/shared/interfaces/current-user.interface';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { AuthType } from 'src/auth/enums/auth-type.enum';
 import { Roles } from 'src/auth/decorators/roles.decorator';

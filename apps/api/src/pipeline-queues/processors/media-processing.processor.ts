@@ -14,7 +14,7 @@ import { MediaAsset } from '../../pipeline-core/entities/media-asset.entity';
 import { FfmpegCompositionProvider } from '../../media-processing/providers/ffmpeg-composition.provider';
 import { AssetStorageService } from '../../assets/providers/asset-storage.service';
 import { PipelineOrchestratorService } from '../providers/pipeline-orchestrator.service';
-import type { PipelineJob } from '../interfaces/pipeline-job.interface';
+import type { PipelineJob } from '../../shared/interfaces/pipeline-job.interface';
 
 @Processor(RENDER_QUEUE)
 export class MediaProcessingProcessor extends WorkerHost {

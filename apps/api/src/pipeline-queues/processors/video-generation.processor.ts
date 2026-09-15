@@ -14,7 +14,7 @@ import { MediaAsset } from '../../pipeline-core/entities/media-asset.entity';
 import { VideoGenerationService } from '../../video-generation/providers/video-generation.service';
 import { AssetStorageService } from '../../assets/providers/asset-storage.service';
 import { PipelineOrchestratorService } from '../providers/pipeline-orchestrator.service';
-import type { SceneGenerationJob } from '../interfaces/pipeline-job.interface';
+import type { SceneGenerationJob } from '../../shared/interfaces/pipeline-job.interface';
 
 @Processor(VIDEO_GENERATION_QUEUE)
 export class VideoGenerationProcessor extends WorkerHost {

@@ -6,7 +6,7 @@ import {
   type PlatformPublisher,
   type PublishRequest,
   type PublishResult,
-} from '../../pipeline-core/interfaces/publisher.interface';
+} from '../../shared/interfaces/publisher.interface';
 import publishingConfig from '../config/publishing.config';
 
 @Injectable()

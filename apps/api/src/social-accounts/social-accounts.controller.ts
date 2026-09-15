@@ -10,7 +10,7 @@ import {
 import { CreateChannelDto } from './dtos/create-channel.dto';
 import { SocialAccountsService } from './providers/social-accounts.service';
 import { CurrentUserData } from 'src/auth/decorators/current-user-data.decorator';
-import { type CurrentUser } from 'src/auth/interfaces/current-user.interface';
+import { type CurrentUser } from 'src/shared/interfaces/current-user.interface';
 import { AuthType } from 'src/auth/enums/auth-type.enum';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 

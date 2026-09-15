@@ -4,7 +4,7 @@ import videoGenerationConfig from './config/video-generation.config';
 import { RunwayVideoGeneratorProvider } from './providers/runway-video-generator.provider';
 import { MockVideoGeneratorProvider } from './providers/mock-video-generator.provider';
 import { VideoGenerationService } from './providers/video-generation.service';
-import { VIDEO_GENERATOR } from '../pipeline-core/interfaces/video-generation.interface';
+import { VIDEO_GENERATOR } from '../shared/interfaces/video-generation.interface';
 import { GenerationProvider } from '../pipeline-core/enums/generation-provider.enum';
 
 @Module({

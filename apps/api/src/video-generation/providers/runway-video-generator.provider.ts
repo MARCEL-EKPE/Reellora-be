@@ -10,7 +10,7 @@ import {
   type VideoGenerationRequest,
   type VideoGenerationResult,
   type VideoGenerationStatus,
-} from '../../pipeline-core/interfaces/video-generation.interface';
+} from '../../shared/interfaces/video-generation.interface';
 import videoGenerationConfig from '../config/video-generation.config';
 
 @Injectable()

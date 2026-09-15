@@ -3,7 +3,7 @@ import type {
   PlatformPublisher,
   PublishRequest,
   PublishResult,
-} from '../../pipeline-core/interfaces/publisher.interface';
+} from '../../shared/interfaces/publisher.interface';
 
 @Injectable()
 export class YouTubePublisherProvider implements PlatformPublisher {

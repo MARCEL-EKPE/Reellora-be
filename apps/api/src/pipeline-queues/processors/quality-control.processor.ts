@@ -10,8 +10,7 @@ import { AssetType } from '../../pipeline-core/enums/asset-type.enum';
 import { QualityCheck } from '../../pipeline-core/entities/quality-check.entity';
 import { MediaAsset } from '../../pipeline-core/entities/media-asset.entity';
 import { QualityControlProvider } from '../../quality-control/providers/quality-control.provider';
-import { PipelineOrchestratorService } from '../providers/pipeline-orchestrator.service';
-import type { PipelineJob } from '../interfaces/pipeline-job.interface';
+import type { PipelineJob } from '../../shared/interfaces/pipeline-job.interface';
 
 @Processor(QUALITY_CONTROL_QUEUE)
 export class QualityControlProcessor extends WorkerHost {
@@ -25,7 +24,6 @@ export class QualityControlProcessor extends WorkerHost {
     @InjectRepository(MediaAsset)
     private readonly mediaAssetRepository: Repository<MediaAsset>,
     private readonly qualityControlProvider: QualityControlProvider,
-    private readonly orchestrator: PipelineOrchestratorService,
   ) {
     super();
   }
@@ -71,7 +69,6 @@ export class QualityControlProcessor extends WorkerHost {
 
       video.status = VideoStatus.READY_TO_PUBLISH;
       await this.videoRepository.save(video);
-      await this.orchestrator.enqueue(videoId, 'publish');
     } catch (error) {
       this.logger.error(
         `[QualityControl] failed for videoId=${videoId}`,

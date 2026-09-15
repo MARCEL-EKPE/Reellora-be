@@ -1,1912 +1,313 @@
-<!-- INPUT SOURCES
-  Reuters Africa RSS · Bloomberg Africa · BusinessDay Nigeria API
-  African Development Bank reports · IMF/World Bank Africa data
-        ↓
-INTELLIGENCE LAYER
-  Extract key facts/figures · identify story angle · pull statistics
-        ↓
-SCRIPT GENERATION (Claude/GPT-4 API)
-  8-minute script per topic — hook, context, analysis, conclusion
-  Tone: authoritative but accessible, for an African business audience
-        ↓
-VOICEOVER (ElevenLabs)
-  Deep, authoritative African-accented voice — channel identity
-        ↓
-VISUALS
-  Maps (Datawrapper API) · auto-generated charts/graphs
-  Stock footage (Pexels API) · AI concept images (Flux API)
-        ↓
-ASSEMBLY (FFmpeg pipeline)
-  Burned-in captions · background music (corporate/afrobeats fusion)
-  Lower thirds for stats · branded intro/outro
-        ↓
-AUTO-PUBLISH (YouTube API)
-  Optimized title/description/tags · auto-generated thumbnail
-  Scheduled for peak audience time -->
-  # Automated News-to-YouTube Video Generation Pipeline
+# Reellora: AI Video Generation Platform
 
 ## 1. Project Overview
 
-This project is an automated content-to-video pipeline that transforms news/content discovered from RSS feeds into finished, YouTube-ready videos.
+Reellora is a creator-facing platform that turns curated news and trending stories into finished, publish-ready videos.
+
+The platform discovers content from external sources, normalizes it, categorizes it, and presents it as a feed inside the creator dashboard. Each story arrives with associated assets. A creator reviews the feed, selects a story, and clicks Generate Video. That action sends a request to the backend, where the video-generation orchestration layer kicks off the pipeline.
 
 The target workflow is:
 
-```text
-RSS Feeds
-    ↓
-Content Ingestion
-    ↓
-Research & Analysis
-    ↓
-YouTube Script Generation
-    ↓
-Video Planning / Storyboarding
-    ↓
-Runway Video + TTS Generation
-    ↓
-Asset Management / Azure Blob Storage
-    ↓
-FFmpeg Composition & Post-Processing
-    ↓
-Quality Control
-    ↓
-YouTube Publishing
-```
+External Sources → Content Discovery → Normalization + Categorization + Asset Extraction → Categorized News Feed → Creator clicks Generate Video → Generate Video API → Video Generation Orchestrator → Research/Script/Video Plan → Runway Video + TTS → Object Storage → FFmpeg Assembly → Quality Control → Final Video → Dashboard + Platform Publishing
 
-The expected output is a professionally assembled video, typically around 5–8 minutes long, containing generated visuals, narration, subtitles, branding, and YouTube metadata.
+The expected output is a professionally assembled video, typically around 5–8 minutes long for long-form platforms, containing generated visuals, narration, subtitles, branding, and platform-ready metadata. Short-form outputs can be produced from the same source later.
 
-### Core architectural principle
+### Core principle
 
-> **NestJS orchestrates the pipeline, Runway generates the raw AI media, Amazon S3 Storage stores media assets, FFmpeg produces the final video, and the YouTube integration publishes the finished result.**
+The dashboard and API collect creator intent, NestJS orchestrates the pipeline, Runway generates the raw AI media, object storage stores media assets, FFmpeg produces the final video, and platform-specific publishers distribute the finished result.
 
-Runway is the selected AI video-generation engine for this project. Its TTS/narration capability is also part of the planned media-generation workflow, so a separate TTS provider is not required initially.
+### Central product question
+
+The architecture answers: what content is available, and what does the creator want to turn into a video?
+
+The dashboard is the bridge between Reellora's content intelligence system and its AI video-generation pipeline.
 
 ---
 
-# 2. Architectural Goals
+## 2. Architectural Goals
 
 The architecture should be:
 
-- **Asynchronous** — long-running AI/video operations must not block HTTP requests.
-- **Fault tolerant** — individual generation failures should be retryable.
+- **Creator-driven** — generation is triggered by explicit user intent, not only by automation.
+- **Asynchronous** — long-running AI and video operations must not block HTTP requests.
+- **Fault tolerant** — individual generation failures should be retryable at the failed stage.
 - **Observable** — every stage should expose status and errors.
 - **Idempotent** — retries should not accidentally create duplicate content.
 - **Provider-isolated** — Runway-specific implementation should not leak throughout the application.
 - **Media-oriented** — large files should move through object storage rather than application memory.
 - **Scalable** — multiple videos and scenes should be processable concurrently.
 - **Resumable** — a failed scene should not require regenerating the entire video.
-- **YouTube-ready** — final output must satisfy the technical requirements of the publishing stage.
-- **Replaceable** — AI providers can eventually be changed without rewriting the whole system.
+- **Platform-ready** — final output can be adapted for YouTube, TikTok, Instagram, and other platforms.
+- **Replaceable** — AI providers and publishers can eventually be changed without rewriting the whole system.
 
 ---
 
-# 3. High-Level Architecture
+## 3. System Architecture
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│                        CONTENT PIPELINE                      │
-└──────────────────────────────────────────────────────────────┘
+The system has two main regions: the content discovery side and the video generation side. The dashboard sits between them.
 
-                        RSS FEEDS
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ 1. INGESTION        │
-                 │                     │
-                 │ RSS → Articles      │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ 2. RESEARCH &       │
-                 │    ANALYSIS         │
-                 │                     │
-                 │ Facts / Context     │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ 3. SCRIPT           │
-                 │    GENERATION       │
-                 │                     │
-                 │ 5–8 min narration   │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ 4. VIDEO PLANNER    │
-                 │                     │
-                 │ Script → Scenes     │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ 5. RUNWAY           │
-                 │    GENERATION       │
-                 │                     │
-                 │ Video + TTS         │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ 6. ASSET            │
-                 │    MANAGEMENT       │
-                 │                     │
-                 │ Amazon S3 Bucket  │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ 7. MEDIA            │
-                 │    PROCESSING       │
-                 │                     │
-                 │ FFmpeg              │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ 8. QUALITY CONTROL  │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ 9. YOUTUBE          │
-                 │    PUBLISHING       │
-                 └─────────────────────┘
-```
+Content Discovery:
+- External sources such as RSS feeds, news APIs, and financial APIs are polled periodically.
+- Discovered content is normalized into a common news format.
+- Each item is categorized and its assets are extracted.
+- The result is stored and surfaced in the dashboard feed.
+
+Dashboard:
+- Presents a categorized feed of news items.
+- Allows filtering by category.
+- Lets creators view a story or click Generate Video.
+- Shows generation progress and finished videos.
+
+Video Generation:
+- A backend API receives the generate request and creates a video generation job.
+- The orchestrator coordinates research, script writing, video planning, scene generation, assembly, and quality control.
+- The final video returns to the dashboard.
+- From the dashboard, the creator can publish to connected platforms or enable automatic publishing in settings.
+
+The key shift from the old architecture is that generation is no longer automatic for every discovered item. The dashboard is the control point. Not every piece of news becomes a video.
 
 ---
 
-# 4. Layer 1 — Content Ingestion
+## 4. Content Discovery, Categories & News Assets
 
-## Purpose
+### Categories as first-class concepts
 
-The ingestion layer is responsible for discovering and importing source content into the application.
+Categories organize the dashboard feed and drive content discovery priorities. They are chosen for underserved niches that have strong RPM potential on platforms such as YouTube and TikTok. Examples include African Business, Banking & Finance, African Stocks, Technology, African Economy, Real Estate, Lifestyle, Travel, and Energy.
 
-Its fundamental question is:
+Categories should be configuration-driven rather than hard-coded. Each category can later define target platforms, target audience, and enabled status. For the MVP, the system can be seeded with African Business News and a small set of sources.
 
-> **What new content has entered the system?**
+### Content discovery layer
 
-RSS is the primary input mechanism.
+The content discovery layer discovers, imports, normalizes, categorizes, and enriches content from external sources. It is broader than simple RSS ingestion.
 
-## Responsibilities
+Responsibilities:
+- Poll configured sources
+- Parse RSS, API responses, and publisher feeds
+- Normalize different formats into a common internal news representation
+- Classify items into categories
+- Extract associated assets such as images, videos, thumbnails, charts, and documents
+- Detect and merge duplicates
+- Preserve source attribution and raw metadata
+- Track publication dates and discovery timestamps
 
-### RSS polling
+This layer does not generate scripts, perform final research, generate video, call Runway, render media, or publish to platforms. Its output is a normalized news item with optional source assets.
 
-The service periodically checks configured RSS feeds.
+### News assets
 
-Examples:
+News items now carry assets. These can include images, video clips, thumbnails, charts, and documents. The asset manager stores references and metadata rather than the files themselves, while the actual files live in object storage.
 
-- BBC
-- CNN
-- Al Jazeera
-- Reuters
-- Other configured publishers
-
-The list of feeds should be configuration-driven rather than hard-coded.
-
-### RSS parsing
-
-The service parses RSS/XML documents and extracts fields such as:
-
-- title
-- URL
-- publication date
-- author
-- source
-- summary
-- media references
-- categories
-
-### Article normalization
-
-Different publishers structure RSS feeds differently.
-
-The ingestion layer should normalize these differences into a common internal representation.
-
-Example:
-
-```typescript
-interface Article {
-  id: string;
-  source: string;
-  title: string;
-  url: string;
-  summary?: string;
-  content?: string;
-  author?: string;
-  publishedAt: Date;
-  discoveredAt: Date;
-}
-```
-
-### Duplicate detection
-
-The same article may appear during multiple polling cycles.
-
-The ingestion layer should prevent duplicate article records using identifiers such as:
-
-- canonical URL
-- RSS GUID
-- source + external ID
-- content hash
-
-### Source tracking
-
-Every article should retain its source information.
-
-This is important for:
-
-- attribution
-- research
-- auditing
-- debugging
-- future content verification
-
-### Raw content preservation
-
-Where practical, preserve the original RSS payload or normalized source information so later stages can trace where a story came from.
-
-## What this layer should NOT do
-
-It should not:
-
-- generate scripts
-- perform final research
-- generate video
-- call Runway
-- render media
-- upload to YouTube
-
-Its output is an **ingested content item**.
+These assets are available to the video planner, which can choose to reuse a source asset instead of generating a new visual. This reduces Runway costs and improves factual accuracy for stories that already have suitable media.
 
 ---
 
-# 5. Layer 2 — Research & Analysis
+## 5. Dashboard, API & Orchestration
 
-## Purpose
+### Dashboard feed
 
-The research layer transforms raw articles into structured information that can safely and intelligently drive script generation.
+The dashboard is the creator-facing surface. At this stage the feed is global, and users can filter by category. Each item shows title, source, category, summary, published date, and a preview asset where available.
 
-Its fundamental question is:
+Creators can:
+- Browse the feed
+- Filter by category
+- View the original story
+- Click Generate Video to start production
+- Track generation progress
+- Review finished videos
+- Publish manually or manage auto-publish settings
 
-> **What do we actually know about this story?**
+### Generate video API
 
-The ingestion layer gives us an article.
+When a creator clicks Generate Video, the dashboard sends a request to the backend. The API validates the news item, creates a video record and a generation job, pushes the job to the orchestration queue, and returns immediately with a job identifier and queued status.
 
-The research layer determines:
+The frontend subscribes to job status and shows progress through stages such as preparing story, creating script, generating scenes, composing video, and quality check.
 
-- important facts
-- context
-- entities
-- events
-- chronology
-- supporting information
-- potentially conflicting information
+### Video generation orchestrator
 
-## Responsibilities
+The orchestrator is the central coordinator. It does not perform the actual media work. Its job is to dispatch and track each stage.
 
-### Content analysis
+It receives a generation request tied to a specific news item and optional settings such as platform, duration, and style. It then moves the video through lifecycle states, dispatching work to the queue system and reporting status back to the dashboard.
 
-Extract the important information from the article.
+The orchestrator is also where conditional decisions happen, such as whether a story needs research or can move straight to script generation.
 
-Example:
+### Queue responsibilities
 
-```json
-{
-  "topic": "Major offshore oil discovery",
-  "keyFacts": [
-    "...",
-    "...",
-    "..."
-  ]
-}
-```
-
-### Entity extraction
-
-Identify:
-
-- people
-- companies
-- organizations
-- countries
-- cities
-- locations
-- products
-- events
-
-### Timeline extraction
-
-Where relevant, identify:
-
-```text
-Event A
-   ↓
-Event B
-   ↓
-Announcement
-   ↓
-Expected next step
-```
-
-This becomes useful to the script writer and video planner.
-
-### Context gathering
-
-A single RSS article may not contain enough information for a useful YouTube video.
-
-The research layer can enrich the story using additional approved sources.
-
-### Fact organization
-
-The research output should distinguish between:
-
-- confirmed facts
-- claims
-- context
-- opinions
-- uncertain information
-
-This reduces the chance of the script presenting speculation as fact.
-
-## Output
-
-The research stage should produce a structured research object.
-
-Example:
-
-```typescript
-interface ResearchResult {
-  topic: string;
-  summary: string;
-  keyFacts: string[];
-  entities: Entity[];
-  timeline: TimelineEvent[];
-  sources: SourceReference[];
-  uncertainties: string[];
-}
-```
-
-## What this layer should NOT do
-
-It should not:
-
-- create final video prompts
-- generate Runway assets
-- compose video
-- publish to YouTube
-
-Its job is to prepare reliable information for the script layer.
+The queue system, such as BullMQ with Redis, handles asynchronous processing, retries, concurrency, delayed jobs, failed jobs, backoff, job status, and worker isolation. Scene generation can run in parallel to reduce total pipeline time.
 
 ---
 
-# 6. Layer 3 — Script Generation
+## 6. Video Pipeline Stages
 
-## Purpose
+### Conditional research
 
-The script generation layer transforms research into a YouTube-style narration script.
+Research is no longer mandatory for every item. The orchestrator decides whether a story needs enrichment based on category, source, complexity, or user preference.
 
-Its fundamental question is:
+When research runs, it extracts important facts, context, entities, events, chronology, supporting information, and potential conflicts. Its output is a structured research result that the script layer can consume without re-reading the original source.
 
-> **What should the audience hear?**
+### Script generation
 
-The expected output is generally a 5–8 minute script.
+The script layer converts research and/or source news into a spoken narrative. It produces a 5–8 minute script with a strong hook, clear context, factual body, and concise conclusion. It also suggests title, description, and tags.
 
-## Responsibilities
+It does not decide visual scenes, generate media, or publish videos. Its output is a video script.
 
-### Story structure
+### Video planner
 
-The script should have a coherent structure, for example:
+The video planner converts the script into visual scenes. It receives the news item, its assets, any research, the script, and generation settings. For each scene it chooses the best visual source: an existing source asset, a generated Runway clip, or a graphic such as a chart or map.
 
-```text
-Hook
- ↓
-Context
- ↓
-Main development
- ↓
-Evidence / details
- ↓
-Why it matters
- ↓
-What happens next
- ↓
-Conclusion
-```
+This intelligent reuse of source assets substantially reduces generation cost.
 
-### Audience-oriented writing
+### Runway generation
 
-The script should be written for spoken delivery rather than as an academic article.
+Runway is the selected AI video-generation engine. It generates raw AI video and text-to-speech narration for scenes where source assets are insufficient.
 
-It should:
+Runway-specific implementation should be isolated behind a provider interface so the rest of the application does not depend on it directly. Runway should not decide scenes, assemble videos, or publish to platforms.
 
-- sound natural when narrated
-- avoid unnecessarily complex sentences
-- maintain audience interest
-- introduce context progressively
-- avoid repetitive statements
+### Asset management
 
-### Duration targeting
+The asset manager stores and versions all media used by the pipeline, including ingested source assets and generated clips. It stores references in the database and files in object storage such as Azure Blob, Amazon S3, Cloudflare R2, or MinIO.
 
-The system should estimate narration duration based on word count and target speaking rate.
+It does not generate media or assemble videos.
 
-The script generator should target the configured duration rather than simply producing an arbitrary number of words.
+### FFmpeg assembly
 
-### Metadata generation
+FFmpeg assembles raw assets into the final video. Responsibilities include scene composition, concatenation, audio processing, subtitles, branding, video formatting, transitions, and thumbnail processing.
 
-The script stage may also produce:
+It does not generate AI media or decide platform strategy. Its output is a final MP4.
 
-- working title
-- alternate titles
-- description
-- keywords
-- suggested tags
-- thumbnail concept
+### Quality control
 
-These can later be refined before publishing.
+Quality control verifies that the final output is ready for publication. It performs file validation, video validation, audio validation, subtitle validation, scene validation, and AI-based checks where appropriate.
 
-## Example output
-
-```typescript
-interface VideoScript {
-  title: string;
-  hook: string;
-  sections: ScriptSection[];
-  conclusion: string;
-  estimatedDurationSeconds: number;
-}
-```
-
-## Important separation
-
-The script generator primarily determines:
-
-> **WHAT IS SAID**
-
-It does not determine exactly:
-
-> **WHAT IS SHOWN**
-
-That is the responsibility of the Video Planner.
-
----
-
-# 7. Layer 4 — Video Planner / Storyboard
-
-## Purpose
-
-The Video Planner converts the spoken script into a visual production plan.
-
-This is one of the most important layers in the system.
-
-Its fundamental question is:
-
-> **How should this story be visually presented?**
-
-A 5–8 minute script should not be sent to Runway as one large generation request.
-
-Instead, it should be broken into scenes.
-
-## Responsibilities
-
-### Scene segmentation
-
-Break the script into visually meaningful scenes.
-
-Example:
-
-```text
-Scene 01 — Hook
-Scene 02 — Background
-Scene 03 — Main event
-Scene 04 — Location
-Scene 05 — Key person
-Scene 06 — Reaction
-...
-Scene N — Conclusion
-```
-
-### Scene duration
-
-Each scene receives a target duration.
-
-Because AI video generation is clip-based, a long narration section may require multiple visual clips.
-
-### Visual prompt generation
-
-The planner converts narration into visual instructions.
-
-Example:
-
-```json
-{
-  "narration": "The company announced a major offshore discovery.",
-  "visual": {
-    "type": "runway",
-    "prompt": "Cinematic aerial view of a modern offshore oil platform..."
-  }
-}
-```
-
-### Visual strategy
-
-The planner should eventually be able to choose between visual types such as:
-
-```text
-runway_video
-image
-stock_video
-map
-chart
-text_graphic
-archive_media
-```
-
-Runway is the selected AI video engine, but not every second of a YouTube video necessarily needs to be AI-generated.
-
-### Narration mapping
-
-Each scene should identify exactly which narration belongs to it.
-
-This creates synchronization between:
-
-```text
-Narration
-    +
-Visual
-```
-
-### Transition planning
-
-The planner can specify:
-
-- cut
-- fade
-- dissolve
-- zoom
-- graphic transition
-- lower-third appearance
-
-These instructions are later consumed by the composition layer.
-
-## Example VideoPlan
-
-```typescript
-interface VideoPlan {
-  videoId: string;
-  title: string;
-  estimatedDurationSeconds: number;
-  scenes: VideoScene[];
-}
-
-interface VideoScene {
-  id: string;
-  order: number;
-  narration: string;
-  durationSeconds: number;
-
-  visual: {
-    type: 'runway' | 'image' | 'stock' | 'graphic' | 'map';
-    prompt?: string;
-    referenceImageUrl?: string;
-  };
-
-  transition?: {
-    type: string;
-    durationSeconds?: number;
-  };
-}
-```
-
-## What this layer should NOT do
-
-It should not:
-
-- directly render the final video
-- perform FFmpeg operations
-- upload to YouTube
-- permanently store generated media
-
-It produces the **production blueprint**.
-
----
-
-# 8. Layer 5 — Runway Generation
-
-## Purpose
-
-The Runway layer is the AI media-generation engine.
-
-Its fundamental question is:
-
-> **Can we generate the visual media and narration required by this scene?**
-
-Runway is responsible for generating the raw AI media required by the VideoPlan.
-
-## Responsibilities
-
-### Video generation
-
-For each Runway scene:
-
-```text
-Visual Prompt
-      ↓
-Runway
-      ↓
-Generated Video Clip
-```
-
-Depending on the selected Runway workflow, generation may use:
-
-- text-to-video
-- image-to-video
-- other supported generation inputs
-
-### TTS / narration generation
-
-Runway's TTS capability is part of this architecture.
-
-Therefore the initial system does NOT require a separate TTS provider.
-
-Conceptually:
-
-```text
-Scene narration
-      ↓
-Runway TTS
-      ↓
-Narration audio
-```
-
-### Generation job management
-
-Runway generation is asynchronous.
-
-The application should maintain a job record such as:
-
-```typescript
-interface VideoGenerationJob {
-  id: string;
-  sceneId: string;
-  provider: 'runway';
-  providerTaskId: string;
-  status:
-    | 'pending'
-    | 'processing'
-    | 'completed'
-    | 'failed';
-  outputUrl?: string;
-  error?: string;
-}
-```
-
-### Polling / task monitoring
-
-The service monitors Runway generation tasks until they reach a terminal state.
-
-### Retry handling
-
-Transient failures should be retryable.
-
-Permanent failures should be recorded and surfaced to the orchestration layer.
-
-### Provider isolation
-
-Only the Runway provider implementation should know the Runway SDK/API details.
-
-Use an abstraction such as:
-
-```typescript
-interface VideoGenerator {
-  generate(
-    request: VideoGenerationRequest,
-  ): Promise<VideoGenerationJob>;
-
-  getStatus(
-    jobId: string,
-  ): Promise<VideoGenerationStatus>;
-
-  cancel(
-    jobId: string,
-  ): Promise<void>;
-}
-```
-
-Then:
-
-```text
-VideoGenerator
-      │
-      └── RunwayVideoGenerator
-```
-
-This means the rest of the application does not depend directly on Runway.
-
-## What this layer should NOT do
-
-Runway should not be responsible for:
-
-- assembling the complete 5–8 minute video
-- YouTube upload
-- final application storage
-- final video QC
-- application-level orchestration
-
-Runway generates **raw scene media**.
-
----
-
-# 9. Layer 6 — Asset Management
-
-## Purpose
-
-The Asset Management layer owns the lifecycle of media files generated or consumed by the pipeline.
-
-The project uses Azure Blob Storage as the primary object storage layer.
-
-Its fundamental question is:
-
-> **Where are our media assets, and how do we reliably manage them?**
-
-## Responsibilities
-
-### Store generated media
-
-When Runway generates a scene:
-
-```text
-Runway
-   ↓
-Generated Asset
-   ↓
-Asset Manager
-   ↓
-Azure Blob Storage
-```
-
-### Organize assets
-
-A recommended structure is:
-
-```text
-videos/
-  {videoId}/
-
-    script/
-      script.json
-
-    scenes/
-      {sceneId}/
-        video.mp4
-        narration.mp3
-        metadata.json
-
-    final/
-      video.mp4
-      thumbnail.jpg
-      subtitles.vtt
-```
-
-### Asset metadata
-
-Maintain metadata such as:
-
-```typescript
-interface MediaAsset {
-  id: string;
-  videoId: string;
-  sceneId?: string;
-  type: 'video' | 'audio' | 'image' | 'subtitle';
-  storageKey: string;
-  mimeType: string;
-  sizeBytes: number;
-  durationSeconds?: number;
-}
-```
-
-### Temporary asset management
-
-Some files are intermediate files and may eventually be deleted.
-
-The asset layer should support lifecycle policies.
-
-### Stable application references
-
-The rest of the application should reference an internal asset ID or storage key rather than depending on external Runway URLs.
-
-## Why this matters
-
-Runway is an external generation provider.
-
-Your application should not depend on an external generation URL remaining available forever.
-
-Once an asset is generated:
-
-```text
-External provider
-       ↓
-Your storage
-       ↓
-Your pipeline
-```
-
----
-
-# 10. Layer 7 — Media Processing / FFmpeg
-
-## Purpose
-
-The Media Processing layer transforms individual media assets into the final video.
-
-Its fundamental question is:
-
-> **How do we turn the generated assets into one professional video?**
-
-This is where the existing FFmpeg work belongs.
-
-## Responsibilities
-
-### Scene composition
-
-Combine:
-
-```text
-Scene video
-+
-Narration
-```
-
-into synchronized scene outputs where required.
-
-### Concatenation
-
-Combine all scene outputs:
-
-```text
-Scene 01
-Scene 02
-Scene 03
-...
-Scene N
-      ↓
-   FFmpeg
-      ↓
-final.mp4
-```
-
-### Audio processing
-
-Handle:
-
-- narration volume
-- background music
-- audio mixing
-- audio normalization
-- silence management
-- synchronization
-
-### Subtitles
-
-Generate or consume subtitle files and optionally burn them into the video.
-
-Supported formats may include:
-
-- SRT
-- VTT
-- ASS
-
-### Branding
-
-Apply:
-
-- channel logo
-- watermark
-- intro
-- outro
-- lower thirds
-- visual identity
-
-### Video formatting
-
-Handle:
-
-- 16:9 YouTube format
-- resolution
-- frame rate
-- codec
-- bitrate
-- pixel format
-
-### Transitions
-
-Apply the transitions specified by the Video Planner.
-
-### Thumbnail processing
-
-Generate or process the final thumbnail where required.
-
-## Important principle
-
-FFmpeg is the **final media assembly engine**.
-
-Runway generates the raw AI assets.
-
-FFmpeg turns them into the final product.
-
----
-
-# 11. Layer 8 — Quality Control
-
-## Purpose
-
-The Quality Control layer verifies that the final video is valid before publication.
-
-Its fundamental question is:
-
-> **Is this video actually ready for YouTube?**
-
-## Responsibilities
-
-### File validation
-
-Check:
-
-- file exists
-- file is readable
-- file size is reasonable
-- correct MIME type
-- no obvious corruption
-
-### Video validation
-
-Check:
-
-- duration
-- resolution
-- frame rate
-- video stream
-- codec
-- aspect ratio
-
-### Audio validation
-
-Check:
-
-- audio stream exists
-- duration matches video appropriately
-- audio is not missing
-- audio levels are within expected range
-
-### Subtitle validation
-
-Check:
-
-- subtitle file exists if required
-- timestamps are valid
-- subtitle duration is compatible with video
-
-### Scene validation
-
-Optionally verify that all expected scenes have successfully produced assets.
-
-```text
-Scene 01 ✓
-Scene 02 ✓
-Scene 03 ✓
-Scene 04 ✓
-...
-Scene N  ✓
-```
-
-### AI-based QC
-
-A later version can use AI to check:
-
-- visual relevance
-- narration/visual alignment
-- missing scenes
-- unexpected visual artifacts
-- inappropriate generated content
-
-This should initially be optional rather than blocking the entire MVP.
-
----
-
-# 12. Layer 9 — YouTube Publishing
-
-## Purpose
-
-The YouTube Publishing layer takes an approved final video and publishes it.
-
-Its fundamental question is:
-
-> **How do we publish the finished asset to YouTube?**
-
-## Responsibilities
-
-### Video upload
-
-Upload the final MP4.
-
-### Metadata
-
-Set:
-
-- title
-- description
-- tags
-- category
-- language
-- visibility
-
-### Thumbnail
-
-Upload the generated thumbnail.
-
-### Scheduling
-
-Support:
-
-- immediate publishing
-- private upload
-- unlisted upload
-- scheduled publishing
-
-### Upload tracking
-
-Persist:
-
-```typescript
-interface YouTubePublication {
-  videoId: string;
-  youtubeVideoId?: string;
-  status:
-    | 'pending'
-    | 'uploading'
-    | 'published'
-    | 'failed';
-  publishedAt?: Date;
-  error?: string;
-}
-```
-
-### Idempotency
-
-A failed request should not accidentally publish duplicate videos.
-
-The publishing layer should track the internal video ID and YouTube video ID.
-
-## What this layer should NOT do
-
-It should not:
-
-- generate videos
-- call Runway
-- run FFmpeg
-- create scripts
-- research articles
-
-It only publishes completed assets.
-
----
-
-# 13. Queue / Orchestration Layer
-
-The layers above describe business responsibilities.
-
-Because this is a media pipeline, they should NOT be executed as one long HTTP request.
-
-A queue/orchestration layer should coordinate them.
-
-BullMQ with Redis is a good fit for this architecture.
-
-## Example workflow
-
-```text
-article.ingest
-      ↓
-research.generate
-      ↓
-script.generate
-      ↓
-video.plan
-      ↓
-scene.generate × N
-      ↓
-asset.store
-      ↓
-video.compose
-      ↓
-video.qc
-      ↓
-youtube.upload
-```
-
-## Scene-level parallelism
-
-Scenes can be generated independently.
-
-For example:
-
-```text
-                Video Plan
-                    │
-       ┌────────────┼────────────┐
-       ↓            ↓            ↓
-    Scene 01     Scene 02     Scene 03
-       ↓            ↓            ↓
-     Runway       Runway       Runway
-       ↓            ↓            ↓
-      Asset        Asset        Asset
-       └────────────┼────────────┘
-                    ↓
-                FFmpeg
-```
-
-This is one of the major reasons the system should use queues.
-
-## Queue responsibilities
-
-The queue system should handle:
-
-- asynchronous processing
-- retries
-- concurrency
-- delayed jobs
-- failed jobs
-- backoff
-- job status
-- worker isolation
-
----
-
-# 14. Database Model
-
-The database should represent the pipeline state.
-
-A conceptual model:
-
-```text
-Article
-   │
-   ▼
-Research
-   │
-   ▼
-Video
-   │
-   ├── Script
-   │
-   ├── VideoPlan
-   │      │
-   │      └── Scene[]
-   │             │
-   │             ├── GenerationJob
-   │             └── MediaAsset
-   │
-   ├── FinalMedia
-   │
-   ├── QualityCheck
-   │
-   └── YouTubePublication
-```
-
-## Suggested entities
-
-```text
-Article
-Research
-Video
-Script
-VideoScene
-GenerationJob
-MediaAsset
-RenderJob
-QualityCheck
-YouTubePublication
-```
-
----
-
-# 15. Video Lifecycle
-
-A video should have a state machine.
-
-Example:
-
-```text
-DISCOVERED
-    ↓
-RESEARCHING
-    ↓
-SCRIPT_GENERATING
-    ↓
-PLANNING
-    ↓
-GENERATING_MEDIA
-    ↓
-MEDIA_READY
-    ↓
-RENDERING
-    ↓
-QUALITY_CHECK
-    ↓
-READY_TO_PUBLISH
-    ↓
-UPLOADING
-    ↓
-PUBLISHED
-```
-
-Failure states should be explicit:
-
-```text
-GENERATION_FAILED
-RENDER_FAILED
-QC_FAILED
-UPLOAD_FAILED
-```
-
-A retry should transition the relevant stage back to a processing state rather than restart the entire pipeline unnecessarily.
-
----
-
-# 16. Recommended NestJS Module Structure
-
-```text
-src/
-│
-├── ingestion/
-│   ├── ingestion.module.ts
-│   ├── ingestion.service.ts
-│   ├── rss/
-│   └── article/
-│
-├── research/
-│   ├── research.module.ts
-│   ├── research.service.ts
-│   └── providers/
-│
-├── script/
-│   ├── script.module.ts
-│   ├── script.service.ts
-│   └── prompts/
-│
-├── video-planning/
-│   ├── video-planning.module.ts
-│   ├── video-planner.service.ts
-│   ├── schemas/
-│   └── prompts/
-│
-├── video-generation/
-│   ├── video-generation.module.ts
-│   ├── video-generator.interface.ts
-│   ├── video-generation.service.ts
-│   │
-│   └── runway/
-│       ├── runway.module.ts
-│       ├── runway.service.ts
-│       ├── runway.types.ts
-│       └── runway.mapper.ts
-│
-├── assets/
-│   ├── assets.module.ts
-│   ├── asset.service.ts
-│   └── azure/
-│       ├── azure-storage.service.ts
-│       └── azure-storage.types.ts
-│
-├── media-processing/
-│   ├── media-processing.module.ts
-│   ├── ffmpeg.service.ts
-│   ├── composition.service.ts
-│   ├── audio.service.ts
-│   └── subtitle.service.ts
-│
-├── quality-control/
-│   ├── quality-control.module.ts
-│   ├── quality-control.service.ts
-│   └── validators/
-│
-├── youtube/
-│   ├── youtube.module.ts
-│   ├── youtube.service.ts
-│   └── youtube.types.ts
-│
-├── queues/
-│   ├── queues.module.ts
-│   ├── ingestion/
-│   ├── research/
-│   ├── script/
-│   ├── video-generation/
-│   ├── rendering/
-│   └── publishing/
-│
-└── common/
-    ├── database/
-    ├── logging/
-    ├── config/
-    └── errors/
-```
-
----
-
-# 17. Runway Provider Isolation
-
-Do not make the rest of the application directly dependent on Runway.
-
-Prefer:
-
-```typescript
-export interface VideoGenerator {
-  generate(
-    request: VideoGenerationRequest,
-  ): Promise<VideoGenerationResult>;
-
-  getStatus(
-    providerTaskId: string,
-  ): Promise<VideoGenerationStatus>;
-}
-```
-
-Implementation:
-
-```typescript
-@Injectable()
-export class RunwayVideoGenerator
-  implements VideoGenerator {
-
-  async generate(
-    request: VideoGenerationRequest,
-  ): Promise<VideoGenerationResult> {
-    // Runway implementation
-  }
-
-  async getStatus(
-    providerTaskId: string,
-  ): Promise<VideoGenerationStatus> {
-    // Runway implementation
-  }
-}
-```
-
-Then:
-
-```text
-Application
-     │
-     ▼
-VideoGenerator interface
-     │
-     ▼
-RunwayVideoGenerator
-     │
-     ▼
-Runway API
-```
-
-This protects the rest of the application from provider-specific implementation details.
-
----
-
-# 18. Storage Strategy
-
-Azure Blob Storage remains the system's media storage layer.
-
-Do not move large media through NestJS unnecessarily.
-
-Prefer:
-
-```text
-Runway
-  ↓
-download/transfer
-  ↓
-Azure Blob
-  ↓
-FFmpeg worker
-  ↓
-Azure Blob
-```
-
-Rather than:
-
-```text
-Runway
-  ↓
-NestJS memory
-  ↓
-NestJS
-  ↓
-FFmpeg
-```
-
-The application should pass around:
-
-- asset IDs
-- storage keys
-- URLs
-- metadata
-
-rather than large binary payloads.
-
----
-
-# 19. Media Processing Philosophy
-
-The system should distinguish between:
-
-### Generation
-
-Performed by Runway.
-
-```text
-"Create this visual."
-"Generate narration."
-```
-
-### Storage
-
-Performed by Azure Blob.
-
-```text
-"Keep this asset."
-```
-
-### Processing
-
-Performed by FFmpeg.
-
-```text
-"Combine these assets."
-"Normalize this audio."
-"Add these subtitles."
-```
+Failures should be explicit and retryable at the failed stage rather than restarting the entire pipeline.
 
 ### Publishing
 
-Performed by YouTube integration.
+Publishing is platform-agnostic. The system uses platform adapters such as a YouTube publisher, TikTok publisher, and Instagram publisher. Each adapter handles upload, metadata, thumbnails, scheduling, status tracking, and idempotency for its platform.
 
-```text
-"Publish this completed video."
-```
+By default, publishing is a separate user action from generation. A creator can enable automatic publishing in personalization settings.
 
-This separation is fundamental to the architecture.
+The video generation engine should not care where the video will ultimately be published. This keeps generation isolated from distribution.
 
 ---
 
-# 20. End-to-End Example
+## 7. Data Model & Lifecycles
 
-Suppose the RSS layer discovers:
+### Conceptual model
 
-```text
-"Major energy company announces new offshore discovery"
-```
+A Category owns many Content Feeds. Each feed produces News items. Each news item can have many News Assets and many generated Videos.
 
-### Step 1 — Ingestion
+A Video can have Research, a Script, a Video Plan, many Scenes, Generation Jobs, Media Assets, a Render Job, a Quality Check, and Publications.
 
-```text
-RSS
- ↓
-Article #1001
-```
+This distinction is important: News is the source content, and Video is a generated product derived from that news.
 
-### Step 2 — Research
+### Suggested entities
 
-```text
-Article #1001
- ↓
-ResearchResult
-```
+Category, ContentFeed, News, NewsAsset, VideoGenerationRequest, Video, Research, Script, VideoPlan, VideoScene, GenerationJob, MediaAsset, RenderJob, QualityCheck, Publication, UserFeedInteraction.
 
-### Step 3 — Script
+### News lifecycle
 
-```text
-ResearchResult
- ↓
-7-minute YouTube script
-```
+News items move through states independently of video generation:
 
-### Step 4 — Video Planning
+Discovered → Normalized → Categorized → Published to Feed → Available
 
-The script becomes:
+News can also be Archived if it becomes stale.
 
-```text
-Scene 01 — Hook
-Scene 02 — Location
-Scene 03 — Company
-Scene 04 — Discovery
-Scene 05 — Technical explanation
-Scene 06 — Economic implications
-...
-Scene 30 — Conclusion
-```
+### Video lifecycle
 
-### Step 5 — Runway
+Videos move through their own state machine:
 
-Each scene gets generated.
+Requested → Queued → Researching → Script Generating → Planning → Generating Media → Media Ready → Rendering → Quality Check → Ready → Published
 
-```text
-Scene 01
- ├── Runway video
- └── Runway narration
+Failure states include Generation Failed, Render Failed, QC Failed, and Upload Failed.
 
-Scene 02
- ├── Runway video
- └── Runway narration
-
-...
-
-Scene 30
- ├── Runway video
- └── Runway narration
-```
-
-### Step 6 — Storage
-
-Assets are stored:
-
-```text
-Azure Blob
-  ↓
-videos/1001/scenes/scene-001/
-videos/1001/scenes/scene-002/
-...
-```
-
-### Step 7 — FFmpeg
-
-```text
-30 scenes
-+
-narration
-+
-music
-+
-subtitles
-+
-branding
-      ↓
-final.mp4
-```
-
-### Step 8 — QC
-
-```text
-final.mp4
- ↓
-FFprobe + validation
- ↓
-PASS
-```
-
-### Step 9 — YouTube
-
-```text
-final.mp4
-+
-title
-+
-description
-+
-thumbnail
- ↓
-YouTube
-```
+Because News and Video are separate, one news article can eventually produce multiple videos such as a YouTube long-form video, a TikTok short, and an Instagram Reel.
 
 ---
 
-# 21. Error Handling Philosophy
+## 8. Implementation Structure
 
-Failures should be isolated to the smallest possible unit.
+The backend can be organized into modules that mirror the architecture:
 
-Bad architecture:
-
-```text
-Scene 27 failed
-     ↓
-Restart entire video
-```
-
-Preferred architecture:
-
-```text
-Scene 27 failed
-     ↓
-Retry Scene 27
-     ↓
-Scene 27 succeeds
-     ↓
-Continue composition
-```
-
-Similarly:
-
-```text
-YouTube upload failed
-     ↓
-Retry upload
-```
-
-There should be no reason to regenerate Runway scenes merely because YouTube temporarily failed.
+- Content module: discovery, categories, news, and source assets
+- Video module: generation orchestrator, research, script, planning, scenes, and rendering
+- AI module: LLM integration and Runway provider
+- Assets module: storage service and object storage provider
+- Media processing module: FFmpeg, composition, subtitles, and audio
+- Quality control module: validators and checks
+- Publishing module: platform adapters for YouTube, TikTok, and Instagram
+- Queues module: workers for generation, research, script, Runway, rendering, and publishing
+- Common module: database, configuration, logging, and error handling
 
 ---
 
-# 22. Observability
+## 9. Operational Concerns
 
-Every pipeline stage should produce structured logs.
+### Error handling
 
-Example:
+- Fail at the right layer. A video provider failure should not crash the web server.
+- Retry transient failures with backoff.
+- Surface permanent failures visibly in the dashboard.
+- Resume from the failure point rather than restarting the entire pipeline.
+- Store every stage result so retries are cheap.
 
-```text
-videoId=123
-sceneId=27
-stage=runway-generation
-status=processing
-providerTaskId=abc123
-```
+### Observability
 
-Track:
+Track job queue depth, stage durations, retry counts, provider latency and errors, storage usage, FFmpeg success and failure rates, and video lifecycle state transitions. Every stage should log its name, request identifier, timestamps, outcome, and relevant metadata.
 
-- job duration
-- generation duration
-- retries
-- provider errors
-- render duration
-- file sizes
-- upload duration
-- total pipeline duration
+### Cost control
 
-This becomes particularly important once multiple videos are generated automatically.
+AI video generation is expensive. Reduce cost by reusing source assets, batching scene generation, caching research and scripts for identical inputs, using cheaper models for drafts, and monitoring per-video cost.
 
----
+The dashboard can show generation quota or estimated cost before a creator clicks Generate. Administrators can throttle generation or disable costly categories and sources.
 
-# 23. Cost Control
+### Development vs production
 
-AI video generation can become the most expensive component of the pipeline.
+In development, use a small set of real RSS sources, mock Runway responses where possible, use local or dev object storage, run workers in the same process, and keep the dashboard and API on a local dev server.
 
-The architecture should therefore support:
-
-- configurable model selection
-- scene duration control
-- maximum scenes per video
-- retry limits
-- concurrency limits
-- draft vs production generation
-- caching
-- reuse of previously generated assets where appropriate
-
-For example:
-
-```text
-Development
- ↓
-Generate only 3 scenes
- ↓
-Test composition
- ↓
-Production
- ↓
-Generate complete video
-```
-
-Do not generate an entire 8-minute video every time you are testing FFmpeg composition.
+In production, run Redis and BullMQ workers independently, use real object storage, add monitoring and alerting, implement rate limiting and cost quotas, and separate web servers from worker processes.
 
 ---
 
-# 24. Development vs Production
+## 10. MVP Scope
 
-## Development
+The first implementation should avoid building every possible feature. The recommended MVP is:
 
-Use:
+- Poll a small set of African business news RSS sources
+- Normalize and categorize discovered content
+- Extract and store source asset references
+- Present a global dashboard feed with category filtering
+- Allow creators to click Generate Video
+- Create a video generation request and enqueue it
+- Run conditional research and script generation
+- Plan scenes with simple asset reuse
+- Generate missing visuals and narration with Runway
+- Store media in object storage
+- Assemble the final video with FFmpeg
+- Run basic quality checks
+- Return the finished video to the dashboard
+- Support manual publishing to YouTube, with auto-publish behind a user setting
 
-```text
-RSS
- ↓
-Sample article
- ↓
-Short script
- ↓
-3–5 scenes
- ↓
-Runway
- ↓
-FFmpeg
- ↓
-Local/temporary storage
-```
-
-This makes development considerably cheaper.
-
-## Production
-
-Use:
-
-```text
-RSS scheduler
- ↓
-Research
- ↓
-Script
- ↓
-Video Plan
- ↓
-Queue
- ↓
-Runway workers
- ↓
-Azure Blob
- ↓
-FFmpeg workers
- ↓
-QC
- ↓
-YouTube
-```
+Initially avoid: multiple video providers, complicated AI QC, advanced stock-media routing, automatic scene correction, complex editing UI, multiple TTS providers, and full multi-platform publishing. Design for those, but build YouTube first.
 
 ---
 
-# 25. MVP Scope
-
-The first implementation should avoid building every possible feature.
-
-Recommended MVP:
-
-```text
-RSS
- ↓
-Article
- ↓
-LLM Research
- ↓
-5–8 min Script
- ↓
-Video Planner
- ↓
-Runway
-   ├── Video
-   └── TTS
- ↓
-Azure Blob
- ↓
-FFmpeg
-   ├── concatenate
-   ├── audio
-   ├── subtitles
-   └── branding
- ↓
-QC
- ↓
-YouTube
-```
-
-Initially avoid over-engineering:
-
-- multiple video providers
-- complicated AI QC
-- advanced stock-media routing
-- sophisticated automatic scene correction
-- complex editing UI
-- multiple TTS providers
-
-Those can be added after the core pipeline works reliably.
-
----
-
-# 26. Long-Term Architecture
+## 11. Long-Term Direction
 
 Once the MVP is stable, the system can evolve toward:
 
-```text
-                    VIDEO GENERATION
-                          │
-            ┌─────────────┼──────────────┐
-            │             │              │
-          Runway       Stock Media     Images
-            │             │              │
-            └─────────────┼──────────────┘
-                          ↓
-                    Asset Manager
-                          ↓
-                       FFmpeg
-                          ↓
-                         QC
-                          ↓
-                       YouTube
-```
-
-The Video Planner becomes intelligent enough to decide the best visual source for each scene.
-
-For example:
-
-```text
-Historical event
-    → archive/stock
-
-Specific person
-    → image + motion
-
-Abstract concept
-    → Runway
-
-Location
-    → map / image / Runway
-
-Data
-    → chart
-
-Breaking-news footage
-    → licensed source material
-```
-
-Runway remains the primary AI video-generation engine, but it does not have to generate every single visual.
+- More source types such as news APIs and financial data feeds
+- More categories with platform-specific target strategies
+- Multi-platform output from a single news item
+- Smarter video planner that automatically chooses the cheapest accurate visual source
+- More AI provider options behind the same interfaces
+- Platform adapters for TikTok, Instagram, and others
+- Personalization such as per-user feed preferences and saved templates
 
 ---
 
-# 27. Final Responsibility Matrix
-
-| Layer | Primary Responsibility | Main Output |
-|---|---|---|
-| Ingestion | Discover and normalize source content | Article |
-| Research | Understand and enrich the story | ResearchResult |
-| Script | Write the spoken YouTube narrative | VideoScript |
-| Video Planner | Convert script into visual scenes | VideoPlan |
-| Runway | Generate AI video + TTS | Raw media |
-| Asset Management | Store and manage media | MediaAsset |
-| FFmpeg | Assemble and process media | Final MP4 |
-| Quality Control | Verify final output | QC result |
-| YouTube | Publish finished video | YouTube video |
-| Queue/Orchestration | Coordinate asynchronous work | Pipeline state |
-
----
-
-# 28. The Core Principle
-
-The entire system can be summarized as:
-
-```text
-                    WHAT DO WE HAVE?
-                           │
-                         RSS
-                           ↓
-                    WHAT IS TRUE?
-                           │
-                       RESEARCH
-                           ↓
-                    WHAT DO WE SAY?
-                           │
-                        SCRIPT
-                           ↓
-                    WHAT DO WE SHOW?
-                           │
-                     VIDEO PLAN
-                           ↓
-                 HOW DO WE GENERATE IT?
-                           │
-                        RUNWAY
-                    Video + TTS
-                           ↓
-                  WHERE DO WE KEEP IT?
-                           │
-                      AZURE BLOB
-                           ↓
-                  HOW DO WE ASSEMBLE IT?
-                           │
-                        FFmpeg
-                           ↓
-                   IS IT READY?
-                           │
-                          QC
-                           ↓
-                   WHERE DOES IT GO?
-                           │
-                       YOUTUBE
-```
+## 12. Core Principle
 
 The most important architectural rule is:
 
-> **Each layer should know what it is responsible for, but should not know the internal implementation details of the layers around it.**
+> Each layer should know what it is responsible for, but should not know the internal implementation details of the layers around it.
 
-This gives you a pipeline that can start relatively small but eventually support automated generation of many YouTube videos without having to redesign the entire system.
+This gives a pipeline that starts as a dashboard-driven, creator-triggered workflow but can eventually support automated, multi-platform generation without redesigning the entire system.

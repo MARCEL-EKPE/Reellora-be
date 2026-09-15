@@ -4,7 +4,6 @@ export interface PipelineJob {
 }
 
 export type PipelineStage =
-  | 'ingest'
   | 'research'
   | 'script'
   | 'plan'

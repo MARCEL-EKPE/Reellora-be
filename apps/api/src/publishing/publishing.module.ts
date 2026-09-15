@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Publication } from '../pipeline-core/entities/publication.entity';
 import { Video } from '../pipeline-core/entities/video.entity';
-import { PLATFORM_PUBLISHER } from '../pipeline-core/interfaces/publisher.interface';
+import { PLATFORM_PUBLISHER } from '../shared/interfaces/publisher.interface';
 import publishingConfig from './config/publishing.config';
 import { MockPublisherProvider } from './providers/mock-publisher.provider';
 import { PublishingService } from './providers/publishing.service';

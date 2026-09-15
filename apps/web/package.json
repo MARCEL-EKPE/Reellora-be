@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@clerk/nuxt": "^3.1.1",
+    "@reellora/shared": "*",
     "@iconify-json/lucide": "^1.2.132",
     "@iconify-json/simple-icons": "^1.2.96",
     "@nuxt/icon": "^2.0.0",

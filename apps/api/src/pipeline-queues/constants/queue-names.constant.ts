@@ -1,4 +1,3 @@
-export const INGESTION_QUEUE = 'ingestion';
 export const RESEARCH_QUEUE = 'research';
 export const SCRIPT_QUEUE = 'script';
 export const VIDEO_PLANNING_QUEUE = 'video-planning';

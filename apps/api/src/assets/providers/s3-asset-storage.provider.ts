@@ -10,7 +10,7 @@ import type {
   AssetStorage,
   AssetUploadRequest,
   StoredAsset,
-} from '../../pipeline-core/interfaces/asset-storage.interface';
+} from '../../shared/interfaces/asset-storage.interface';
 
 @Injectable()
 export class S3AssetStorageProvider implements AssetStorage {
