@@ -78,7 +78,7 @@
     </section>
 
     <!-- Features -->
-    <section class="px-4 py-20 sm:px-6 lg:px-8">
+    <section id="features" class="scroll-mt-20 px-4 py-20 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-6xl">
         <div class="mb-12 text-center">
           <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
@@ -124,7 +124,7 @@
     </section>
 
     <!-- CTA -->
-    <section class="px-4 py-20 sm:px-6 lg:px-8">
+    <section id="get-started" class="scroll-mt-20 px-4 py-20 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-4xl rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50/80 via-white to-violet-50/80 p-10 text-center dark:border-white/10 dark:from-blue-950/30 dark:via-[#0f1016] dark:to-violet-950/30 sm:p-16">
         <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
           Ready to automate your videos?
@@ -142,5 +142,7 @@
         </div>
       </div>
     </section>
+
+    <LayoutAppFooter />
   </div>
 </template>
