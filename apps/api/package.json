@@ -21,8 +21,7 @@
     "doc": "npx @compodoc/compodoc -p tsconfig.json -s --port 3001 --watch -d ./documentation"
   },
   "dependencies": {
-    "@clerk/backend": "^3.17.2",
-    "@reellora/shared": "*",
+    "@clerk/backend": "^3.18.0",
     "@compodoc/compodoc": "^1.1.26",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@ffprobe-installer/ffprobe": "^2.1.2",
@@ -37,6 +36,7 @@
     "@nestjs/schedule": "^6.0.1",
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/typeorm": "^11.0.0",
+    "@reellora/shared": "*",
     "argon2": "^0.44.0",
     "axios": "^1.13.4",
     "bullmq": "^5.65.0",
