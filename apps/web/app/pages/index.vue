@@ -42,12 +42,38 @@
     </section>
 
     <!-- Brand strip -->
-    <section class="border-y border-gray-100 bg-gray-50/50 px-4 py-10 dark:border-white/5 dark:bg-white/[0.02] sm:px-6 lg:px-8">
-      <div class="mx-auto flex max-w-6xl flex-col items-center justify-center gap-6 sm:flex-row">
-        <img src="/images/AppLogo.png" alt="Reellora" class="h-10 w-auto opacity-90 dark:opacity-100" />
-        <p class="text-center text-sm text-gray-500 dark:text-gray-400 sm:text-left">
-          The unified workspace for creators who want to grow faster with AI-driven video automation.
-        </p>
+    <section class="relative overflow-hidden border-y border-gray-100 bg-gray-50/70 px-4 py-10 dark:border-white/5 dark:bg-white/[0.02] sm:px-6 lg:px-8">
+      <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.10),transparent_55%)]" />
+      <div class="relative mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[1fr_auto]">
+        <div class="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+          <div class="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-indigo-100 bg-white shadow-sm shadow-indigo-100/60 dark:border-indigo-500/20 dark:bg-white/5 dark:shadow-none">
+            <img src="/favicon.ico" alt="" class="size-9 object-contain" />
+          </div>
+          <div>
+            <div class="mb-1 flex items-center justify-center gap-2 sm:justify-start">
+              <span class="font-semibold text-gray-900 dark:text-white">Built for creators, by design</span>
+              <span class="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300">Reellora</span>
+            </div>
+            <p class="max-w-xl text-sm leading-6 text-gray-500 dark:text-gray-400">
+              One intelligent workspace to plan, automate, and grow your video presence without the busywork.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 divide-x divide-gray-200 rounded-2xl border border-gray-200/80 bg-white/80 px-2 py-4 shadow-sm backdrop-blur dark:divide-white/10 dark:border-white/10 dark:bg-white/[0.03]">
+          <div class="px-4 text-center">
+            <UIcon name="i-lucide-zap" class="mx-auto mb-1 size-4 text-amber-500" />
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Automate</span>
+          </div>
+          <div class="px-4 text-center">
+            <UIcon name="i-lucide-calendar-clock" class="mx-auto mb-1 size-4 text-blue-500" />
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Schedule</span>
+          </div>
+          <div class="px-4 text-center">
+            <UIcon name="i-lucide-trending-up" class="mx-auto mb-1 size-4 text-emerald-500" />
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Grow</span>
+          </div>
+        </div>
       </div>
     </section>
 
