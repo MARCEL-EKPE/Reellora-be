@@ -5,11 +5,14 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
 
 RUN npm ci --workspace=@reellora/api --include-workspace-root
 
+COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 
+RUN npm run build --workspace=@reellora/shared
 RUN npm run build:api
 
 EXPOSE 3000
@@ -23,11 +26,14 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
 
 RUN npm ci --workspace=@reellora/web --include-workspace-root
 
+COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
 
+RUN npm run build --workspace=@reellora/shared
 RUN npm run build:web
 
 ENV HOST=0.0.0.0
