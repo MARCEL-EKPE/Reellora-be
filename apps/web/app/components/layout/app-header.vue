@@ -23,15 +23,15 @@
           Dashboard
         </NuxtLink>
 
-        <SignedOut>
+        <Show when="signed-out">
           <UButton to="/sign-in" label="Sign in" variant="ghost" size="sm" />
           <UButton to="/sign-up" label="Get started" size="sm" />
-        </SignedOut>
+        </Show>
 
-        <SignedIn>
+        <Show when="signed-in">
           <UButton to="/dashboard" label="Dashboard" variant="ghost" size="sm" class="hidden sm:flex" />
           <UserButton />
-        </SignedIn>
+        </Show>
       </nav>
     </div>
   </header>

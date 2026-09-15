@@ -18,14 +18,14 @@
         </p>
 
         <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <SignedOut>
+          <Show when="signed-out">
             <UButton to="/sign-up" label="Start creating free" size="xl" class="min-w-[12rem]" />
             <UButton to="/sign-in" label="Sign in" variant="outline" size="xl" class="min-w-[12rem]" />
-          </SignedOut>
+          </Show>
 
-          <SignedIn>
+          <Show when="signed-in">
             <UButton to="/dashboard" label="Go to dashboard" size="xl" class="min-w-[12rem]" />
-          </SignedIn>
+          </Show>
         </div>
 
         <div class="mt-12 flex items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400">
@@ -107,12 +107,12 @@
           Join Reellora today and turn your content workflow into a growth engine.
         </p>
         <div class="mt-8 flex justify-center">
-          <SignedOut>
+          <Show when="signed-out">
             <UButton to="/sign-up" label="Create your free account" size="xl" />
-          </SignedOut>
-          <SignedIn>
+          </Show>
+          <Show when="signed-in">
             <UButton to="/dashboard" label="Open dashboard" size="xl" />
-          </SignedIn>
+          </Show>
         </div>
       </div>
     </section>
