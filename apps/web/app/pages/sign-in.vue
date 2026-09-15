@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { SignIn } from '@clerk/nuxt/components';
+
 definePageMeta({
   layout: 'auth',
 });
