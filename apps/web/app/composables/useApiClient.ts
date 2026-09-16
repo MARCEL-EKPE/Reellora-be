@@ -4,6 +4,7 @@ export function useApiClient() {
 
   return $fetch.create({
     baseURL: config.public.apiBase,
+    timeout: 10000,
     async onRequest({ options }) {
       const token = await getToken.value();
       if (token) {

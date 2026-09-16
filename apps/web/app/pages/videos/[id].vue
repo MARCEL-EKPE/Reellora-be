@@ -5,9 +5,6 @@ definePageMeta({
 
 const route = useRoute();
 const store = useDashboardStore();
-const api = useApiClient();
-
-store.setApi(api);
 
 const videoId = route.params.id as string;
 

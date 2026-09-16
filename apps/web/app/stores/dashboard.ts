@@ -1,9 +1,7 @@
 import type { FeedItem, VideoSummary } from '@reellora/shared';
-import type { ApiClient } from '../composables/useApiClient';
 
 export const useDashboardStore = defineStore('dashboard', () => {
-  const api = shallowRef<ApiClient>();
-
+  const api = useApiClient();
   const feed = ref<FeedItem[]>([]);
   const feedLoading = ref(false);
   const feedError = ref('');
@@ -15,20 +13,20 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const videoLoading = ref(false);
   const videoError = ref('');
 
-  function setApi(client: ApiClient) {
-    api.value = client;
-  }
-
   async function loadFeed() {
-    if (!api.value) return;
+    if (feedLoading.value) return;
     feedLoading.value = true;
     feedError.value = '';
     try {
-      const params = new URLSearchParams({ limit: '50' });
-      if (selectedCategory.value) params.set('category', selectedCategory.value);
-      const { data } = await api.value<{ data: FeedItem[] }>(`/dashboard/feed?${params.toString()}`);
+      const { data } = await api<{ data: FeedItem[] }>('/dashboard/feed', {
+        query: {
+          limit: 50,
+          ...(selectedCategory.value && selectedCategory.value !== 'all' && { category: selectedCategory.value }),
+        },
+      });
       feed.value = data;
     } catch (err) {
+      console.error('Failed to load feed:', err);
       feedError.value = err instanceof Error ? err.message : 'Failed to load feed';
     } finally {
       feedLoading.value = false;
@@ -36,13 +34,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   async function loadVideos() {
-    if (!api.value) return;
+    if (videosLoading.value) return;
     videosLoading.value = true;
     videosError.value = '';
     try {
-      const { data } = await api.value<{ data: VideoSummary[] }>('/videos?limit=20');
+      const { data } = await api<{ data: VideoSummary[] }>('/videos', {
+        query: { limit: 20 },
+      });
       videos.value = data;
     } catch (err) {
+      console.error('Failed to load videos:', err);
       videosError.value = err instanceof Error ? err.message : 'Failed to load videos';
     } finally {
       videosLoading.value = false;
@@ -50,13 +51,14 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   async function loadVideo(videoId: string) {
-    if (!api.value) return;
+    if (videoLoading.value) return;
     videoLoading.value = true;
     videoError.value = '';
     try {
-      const { data } = await api.value<{ data: VideoSummary }>(`/videos/${videoId}/status`);
+      const { data } = await api<{ data: VideoSummary }>(`/videos/${videoId}/status`);
       video.value = data;
     } catch (err) {
+      console.error('Failed to load video:', err);
       videoError.value = err instanceof Error ? err.message : 'Failed to load video';
     } finally {
       videoLoading.value = false;
@@ -64,8 +66,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   async function generateVideo(newsItemId: string) {
-    if (!api.value) throw new Error('API client not initialized');
-    return api.value<{ data: { videoId: string; status: string } }>('/videos/generate', {
+    return api<{ data: { videoId: string; status: string } }>('/videos/generate', {
       method: 'POST',
       query: { newsItemId },
     });
@@ -76,8 +77,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
   });
 
   return {
-    api,
-    setApi,
     feed,
     feedLoading,
     feedError,

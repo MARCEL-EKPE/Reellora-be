@@ -7,7 +7,6 @@ import {
   Query,
 } from '@nestjs/common';
 import type {
-  ApiResponse,
   GenerateVideoRequest,
   VideoSummary,
 } from '@reellora/shared';
@@ -20,31 +19,31 @@ export class VideosController {
   @Post('generate')
   async generateVideo(
     @Query() request: GenerateVideoRequest,
-  ): Promise<ApiResponse<{ videoId: string; status: string }>> {
+  ): Promise<{ videoId: string; status: string }> {
     if (!request.newsItemId) {
       throw new NotFoundException('newsItemId is required');
     }
     const video = await this.dashboardService.requestVideoGeneration(
       request.newsItemId,
     );
-    return { data: { videoId: video.id, status: video.status } };
+    return { videoId: video.id, status: video.status };
   }
 
   @Get()
   async listVideos(
     @Query('limit') limit?: string,
-  ): Promise<ApiResponse<VideoSummary[]>> {
+  ): Promise<VideoSummary[]> {
     const videos = await this.dashboardService.listVideos(
       limit ? Number(limit) : undefined,
     );
-    return { data: videos as unknown as VideoSummary[] };
+    return videos as unknown as VideoSummary[];
   }
 
   @Get(':id/status')
   async getVideoStatus(
     @Param('id') videoId: string,
-  ): Promise<ApiResponse<VideoSummary>> {
+  ): Promise<VideoSummary> {
     const video = await this.dashboardService.getVideoStatus(videoId);
-    return { data: video as unknown as VideoSummary };
+    return video as unknown as VideoSummary;
   }
 }
