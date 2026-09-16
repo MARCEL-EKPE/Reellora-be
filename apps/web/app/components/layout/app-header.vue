@@ -11,16 +11,10 @@
 
       <nav class="flex items-center gap-3 sm:gap-5">
         <NuxtLink
-          to="/#features"
+          to="/features"
           class="hidden text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white sm:block"
         >
           Features
-        </NuxtLink>
-        <NuxtLink
-          to="/dashboard"
-          class="hidden text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white sm:block"
-        >
-          Dashboard
         </NuxtLink>
 
         <Show when="signed-out">
