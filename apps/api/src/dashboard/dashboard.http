@@ -1,0 +1,25 @@
+### Variables
+### Replace {{token}} with your Clerk session token.
+### In the browser console after signing in: await window.Clerk?.session?.getToken()
+@baseUrl = http://localhost:3000
+@token = YOUR_CLERK_TOKEN
+
+### Get news feed (all categories)
+GET {{baseUrl}}/dashboard/feed?limit=50
+Authorization: Bearer {{token}}
+
+### Get news feed by category
+GET {{baseUrl}}/dashboard/feed?limit=50&category=african-business
+Authorization: Bearer {{token}}
+
+### Generate a video from a news item
+POST {{baseUrl}}/videos/generate?newsItemId=YOUR_NEWS_ITEM_ID
+Authorization: Bearer {{token}}
+
+### List generated videos
+GET {{baseUrl}}/videos?limit=20
+Authorization: Bearer {{token}}
+
+### Get video status
+GET {{baseUrl}}/videos/YOUR_VIDEO_ID/status
+Authorization: Bearer {{token}}

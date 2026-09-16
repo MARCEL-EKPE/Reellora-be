@@ -1,27 +1,29 @@
 <script setup lang="ts">
-import type { FeedItem as NewsItem, VideoSummary as Video } from '@reellora/shared';
+import type { FeedItem } from '@reellora/shared';
 
 definePageMeta({
   middleware: 'auth',
 });
 
-const selectedCategory = ref<string>('');
-const { data: feed, refresh: refreshFeed, pending: feedPending } = useApi<{ data: NewsItem[] }>(() => `/dashboard/feed?limit=50${selectedCategory.value ? `&category=${selectedCategory.value}` : ''}`);
-const { data: videos, refresh: refreshVideos, pending: videosPending } = useApi<{ data: Video[] }>('/videos?limit=20');
+const store = useDashboardStore();
+const api = useApiClient();
+
+store.setApi(api);
 
 const generating = ref<Record<string, boolean>>({});
 const generationResults = ref<Record<string, { videoId: string; status: string }>>({});
 
-async function generateVideo(newsItemId: string) {
+onMounted(() => {
+  store.loadFeed();
+  store.loadVideos();
+});
+
+async function generate(newsItemId: string) {
   generating.value[newsItemId] = true;
   try {
-    const response = await $fetch(`/videos/generate?newsItemId=${newsItemId}`, {
-      method: 'POST',
-      baseURL: '/api',
-      credentials: 'include',
-    });
-    generationResults.value[newsItemId] = (response as { data: { videoId: string; status: string } }).data;
-    refreshVideos();
+    const { data } = await store.generateVideo(newsItemId);
+    generationResults.value[newsItemId] = data;
+    await store.loadVideos();
   } catch (error) {
     console.error('Failed to generate video:', error);
   } finally {
@@ -34,7 +36,7 @@ function formatDate(date?: string) {
   return new Date(date).toLocaleDateString();
 }
 
-function previewAsset(item: NewsItem) {
+function previewAsset(item: FeedItem) {
   return item.assets?.find((asset) => asset.type === 'image')?.sourceUrl;
 }
 </script>
@@ -58,7 +60,7 @@ function previewAsset(item: NewsItem) {
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold">News Feed</h2>
           <USelect
-            v-model="selectedCategory"
+            v-model="store.selectedCategory"
             :items="[
               { label: 'All categories', value: '' },
               { label: 'African Business', value: 'african-business' },
@@ -67,22 +69,25 @@ function previewAsset(item: NewsItem) {
             ]"
             placeholder="Filter by category"
             class="w-56"
-            @change="() => refreshFeed()"
           />
         </div>
       </template>
 
-      <div v-if="feedPending" class="py-8 text-center text-gray-500">
+      <div v-if="store.feedLoading" class="py-8 text-center text-gray-500">
         Loading feed...
       </div>
 
-      <div v-else-if="!feed?.data?.length" class="py-8 text-center text-gray-500">
+      <div v-else-if="store.feedError" class="py-8 text-center text-red-600">
+        {{ store.feedError }}
+      </div>
+
+      <div v-else-if="!store.feed?.length" class="py-8 text-center text-gray-500">
         No news items available. Content discovery runs hourly.
       </div>
 
       <div v-else class="divide-y divide-gray-100 dark:divide-white/10">
         <div
-          v-for="item in feed.data"
+          v-for="item in store.feed"
           :key="item.id"
           class="flex flex-col gap-4 py-6 sm:flex-row sm:items-start"
         >
@@ -128,7 +133,7 @@ function previewAsset(item: NewsItem) {
               <UButton
                 :loading="generating[item.id]"
                 size="sm"
-                @click="generateVideo(item.id)"
+                @click="generate(item.id)"
               >
                 Generate video
               </UButton>
@@ -150,17 +155,21 @@ function previewAsset(item: NewsItem) {
         <h2 class="text-lg font-semibold">Generated Videos</h2>
       </template>
 
-      <div v-if="videosPending" class="py-8 text-center text-gray-500">
+      <div v-if="store.videosLoading" class="py-8 text-center text-gray-500">
         Loading videos...
       </div>
 
-      <div v-else-if="!videos?.data?.length" class="py-8 text-center text-gray-500">
+      <div v-else-if="store.videosError" class="py-8 text-center text-red-600">
+        {{ store.videosError }}
+      </div>
+
+      <div v-else-if="!store.videos?.length" class="py-8 text-center text-gray-500">
         No videos generated yet.
       </div>
 
       <ul v-else class="divide-y divide-gray-100 dark:divide-white/10">
         <li
-          v-for="video in videos.data"
+          v-for="video in store.videos"
           :key="video.id"
           class="flex items-center justify-between py-4"
         >
