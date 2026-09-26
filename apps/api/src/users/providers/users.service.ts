@@ -250,15 +250,13 @@ export class UsersService {
     return this.createFacebookUserProvider.createFacebookUser(facebookUser);
   }
 
-  public async findOrCreateByClerkId(
-    clerkId: string,
-    email: string,
-    userName?: string,
+  public async findOneByClerkId(clerkId: string): Promise<User | null> {
+    return this.clerkUserSyncProvider.findByClerkId(clerkId);
+  }
+
+  public async syncFromClerkUser(
+    clerkUser: import('@clerk/backend').User,
   ): Promise<User> {
-    return this.clerkUserSyncProvider.findOrCreateByClerkId(
-      clerkId,
-      email,
-      userName,
-    );
+    return this.clerkUserSyncProvider.syncFromClerkUser(clerkUser);
   }
 }

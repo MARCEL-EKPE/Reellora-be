@@ -5,10 +5,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { createClerkClient, verifyToken } from '@clerk/backend';
 import { Request } from 'express';
-import { verifyToken } from '@clerk/backend';
-import { REQUEST_USER_KEY } from '../constants/auth.constants';
 import { UsersService } from 'src/users/providers/users.service';
+import { REQUEST_USER_KEY } from '../constants/auth.constants';
 
 @Injectable()
 export class ClerkAuthGuard implements CanActivate {
@@ -17,7 +17,7 @@ export class ClerkAuthGuard implements CanActivate {
     private readonly usersService: UsersService,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  public async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractTokenFromHeader(request);
 
@@ -25,38 +25,37 @@ export class ClerkAuthGuard implements CanActivate {
       throw new UnauthorizedException('Authorization token not found');
     }
 
+    let clerkId: string;
     try {
       const payload = await verifyToken(token, {
         secretKey: this.configService.get('CLERK_SECRET_KEY'),
       });
-
-      const clerkId = payload.sub;
-      const email = payload.email as string | undefined;
-      const user = await this.usersService.findOrCreateByClerkId(
-        clerkId,
-        email || '',
-        (payload.username as string) ||
-          (payload.first_name as string) ||
-          undefined,
-      );
-
-      request[REQUEST_USER_KEY] = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      };
-
-      return true;
-    } catch (error) {
+      clerkId = payload.sub;
+    } catch {
       throw new UnauthorizedException('Clerk token verification failed');
     }
+
+    let user = await this.usersService.findOneByClerkId(clerkId);
+
+    if (!user || !user.picture) {
+      const clerk = createClerkClient({
+        secretKey: this.configService.get('CLERK_SECRET_KEY'),
+      });
+      const clerkUser = await clerk.users.getUser(clerkId);
+      user = await this.usersService.syncFromClerkUser(clerkUser);
+    }
+
+    request[REQUEST_USER_KEY] = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    return true;
   }
 
-  private extractTokenFromHeader(request: Request) {
-    const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return null;
-    }
-    return authHeader.split(' ')[1];
+  private extractTokenFromHeader(request: Request): string | undefined {
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    return type === 'Bearer' ? token : undefined;
   }
 }
